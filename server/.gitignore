@@ -1,0 +1,78 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Compiled output
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+application-local.properties
+application-local.yml
+application-secrets.properties
+application-secrets.yml
+
+# Spring Boot
+spring-shell.log
+
+# Test reports & coverage
+/test-output/
+surefire-reports/
+failsafe-reports/
+jacoco.exec
+jacoco/
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs — IntelliJ
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# IDEs — Eclipse / STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+HELP.md
+
+# IDEs — NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# IDEs — VS Code
+.vscode/
