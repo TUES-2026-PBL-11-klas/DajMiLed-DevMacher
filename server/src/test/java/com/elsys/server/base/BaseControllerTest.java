@@ -11,26 +11,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
-/**
- * Base for controller (web) layer tests.
- * Boots full context in MOCK web environment — no real HTTP port.
- * Use @MockBean on the subclass to replace services with mocks.
- *
- * Usage:
- *   @SpringBootTest
- *   class UserControllerTest extends BaseControllerTest {
- *       @MockBean UserService userService;
- *
- *       @Test
- *       void getUser_returns200() throws Exception {
- *           given(userService.findById(1L)).willReturn(new UserDto(...));
- *           mockMvc.perform(get("/api/users/1")
- *                   .with(user("admin").roles("ADMIN")))
- *                  .andExpect(status().isOk())
- *                  .andExpect(jsonPath("$.id").value(1));
- *       }
- *   }
- */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 public abstract class BaseControllerTest {
@@ -38,8 +18,7 @@ public abstract class BaseControllerTest {
     @Autowired
     private WebApplicationContext context;
 
-    @Autowired
-    protected ObjectMapper objectMapper;
+    protected final ObjectMapper objectMapper = new ObjectMapper();
 
     protected MockMvc mockMvc;
 

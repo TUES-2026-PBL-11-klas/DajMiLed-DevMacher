@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -17,10 +18,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    // Auth endpoints: max 10 req/min per IP (brute-force protection)
     private static final int AUTH_CAPACITY = 10;
-    // All other endpoints: max 60 req/min per IP
     private static final int GENERAL_CAPACITY = 60;
+
+    @Value("${app.rate-limit.enabled:true}")
+    private boolean enabled;
 
     private final Map<String, Bucket> authBuckets = new ConcurrentHashMap<>();
     private final Map<String, Bucket> generalBuckets = new ConcurrentHashMap<>();
@@ -31,6 +33,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
+
+        if (!enabled) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String ip = resolveClientIp(request);
         boolean isAuthPath = request.getRequestURI().startsWith("/api/auth/");
