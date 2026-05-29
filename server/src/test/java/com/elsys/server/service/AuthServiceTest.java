@@ -4,6 +4,8 @@ import com.elsys.server.base.BaseUnitTest;
 import com.elsys.server.dto.request.LoginRequest;
 import com.elsys.server.dto.request.RegisterRequest;
 import com.elsys.server.dto.response.AuthResponse;
+import com.elsys.server.dto.response.TagDto;
+import com.elsys.server.dto.response.UserDto;
 import com.elsys.server.entity.User;
 import com.elsys.server.exception.EmailAlreadyExistsException;
 import com.elsys.server.repository.UserRepository;
@@ -15,7 +17,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,23 +31,27 @@ class AuthServiceTest extends BaseUnitTest {
     @Mock PasswordEncoder passwordEncoder;
     @Mock JwtService jwtService;
     @Mock AuthenticationManager authenticationManager;
+    @Mock UserService userService;
     @InjectMocks AuthService authService;
+
+    private final UserDto stubDto = new UserDto(1L, "john@test.com", "John", "Doe", List.of());
 
     @Test
     void register_newEmail_returnsAuthResponse() {
         var req = new RegisterRequest("john@test.com", "John", "Doe", "password123");
         given(userRepository.existsByEmail(req.email())).willReturn(false);
         given(passwordEncoder.encode(req.password())).willReturn("hashed");
+        given(userService.buildInitialTags(any(), any())).willReturn(Set.of());
         given(userRepository.save(any(User.class))).willAnswer(inv -> inv.getArgument(0));
         given(jwtService.generateToken(any())).willReturn("token");
         given(jwtService.getExpirationMs()).willReturn(3600000L);
+        given(userService.toDto(any())).willReturn(stubDto);
 
         AuthResponse response = authService.register(req);
 
         assertThat(response.token()).isEqualTo("token");
         assertThat(response.tokenType()).isEqualTo("Bearer");
         assertThat(response.user().email()).isEqualTo("john@test.com");
-        assertThat(response.user().firstName()).isEqualTo("John");
     }
 
     @Test
@@ -63,10 +71,11 @@ class AuthServiceTest extends BaseUnitTest {
         var req = new LoginRequest("john@test.com", "password123");
         User user = User.builder()
                 .email("john@test.com").firstName("John").lastName("Doe")
-                .password("hashed").build();
+                .password("hashed").tags(Set.of()).build();
         given(userRepository.findByEmail(req.email())).willReturn(Optional.of(user));
         given(jwtService.generateToken(user)).willReturn("token");
         given(jwtService.getExpirationMs()).willReturn(3600000L);
+        given(userService.toDto(user)).willReturn(stubDto);
 
         AuthResponse response = authService.login(req);
 

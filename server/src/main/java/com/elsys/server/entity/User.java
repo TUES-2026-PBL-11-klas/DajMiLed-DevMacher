@@ -8,7 +8,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -37,6 +39,14 @@ public class User implements UserDetails {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_tags", joinColumns = @JoinColumn(name = "user_id"))
+    private Set<UserTag> tags;
+
+    public void updateTags(Set<UserTag> newTags) {
+        this.tags = new HashSet<>(newTags);
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

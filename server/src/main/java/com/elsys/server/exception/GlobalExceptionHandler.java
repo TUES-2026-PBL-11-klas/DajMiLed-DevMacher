@@ -14,6 +14,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -57,6 +58,44 @@ public class GlobalExceptionHandler {
                 ErrorResponse.of(405, "Method Not Allowed",
                         ex.getMethod() + " is not supported for this endpoint",
                         request.getRequestURI())
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+
+        return ResponseEntity.badRequest().body(
+                ErrorResponse.of(400, "Bad Request",
+                        "Invalid value '" + ex.getValue() + "' for parameter '" + ex.getName() + "'",
+                        request.getRequestURI())
+        );
+    }
+
+    @ExceptionHandler(TagAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleTagAlreadyExists(
+            TagAlreadyExistsException ex, HttpServletRequest request) {
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                ErrorResponse.of(409, "Conflict", ex.getMessage(), request.getRequestURI())
+        );
+    }
+
+    @ExceptionHandler(TagNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTagNotFound(
+            TagNotFoundException ex, HttpServletRequest request) {
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ErrorResponse.of(404, "Not Found", ex.getMessage(), request.getRequestURI())
+        );
+    }
+
+    @ExceptionHandler(TagLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleTagLimitExceeded(
+            TagLimitExceededException ex, HttpServletRequest request) {
+
+        return ResponseEntity.badRequest().body(
+                ErrorResponse.of(400, "Bad Request", ex.getMessage(), request.getRequestURI())
         );
     }
 

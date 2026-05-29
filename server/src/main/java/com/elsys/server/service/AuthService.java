@@ -3,16 +3,15 @@ package com.elsys.server.service;
 import com.elsys.server.dto.request.LoginRequest;
 import com.elsys.server.dto.request.RegisterRequest;
 import com.elsys.server.dto.response.AuthResponse;
-import com.elsys.server.dto.response.UserDto;
 import com.elsys.server.entity.User;
 import com.elsys.server.exception.EmailAlreadyExistsException;
 import com.elsys.server.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +21,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final UserService userService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -34,11 +34,11 @@ public class AuthService {
                 .firstName(request.firstName())
                 .lastName(request.lastName())
                 .password(passwordEncoder.encode(request.password()))
+                .tags(userService.buildInitialTags(request.ownTags(), request.searchingForTags()))
                 .build();
 
         userRepository.save(user);
-        String token = jwtService.generateToken(user);
-        return toAuthResponse(token, user);
+        return toAuthResponse(jwtService.generateToken(user), user);
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -49,17 +49,10 @@ public class AuthService {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + request.email()));
 
-        String token = jwtService.generateToken(user);
-        return toAuthResponse(token, user);
+        return toAuthResponse(jwtService.generateToken(user), user);
     }
 
     private AuthResponse toAuthResponse(String token, User user) {
-        UserDto userDto = new UserDto(
-                user.getId(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName()
-        );
-        return new AuthResponse(token, "Bearer", jwtService.getExpirationMs(), userDto);
+        return new AuthResponse(token, "Bearer", jwtService.getExpirationMs(), userService.toDto(user));
     }
 }
