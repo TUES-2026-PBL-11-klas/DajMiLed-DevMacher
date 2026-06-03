@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'screens/explore_screen.dart';
 import 'screens/profile_screen.dart';
 import 'widgets/company_swipe.dart';
 
@@ -66,9 +67,8 @@ class _MatchScreenState extends State<MatchScreen> {
             ),
           ),
         2 => const ProfileScreen(),
-        _ => Center(
-            child: Text('Coming soon', style: theme.textTheme.muted),
-          ),
+        1 => const ExploreScreen(),
+        _ => const ProfileScreen(),
       },
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
