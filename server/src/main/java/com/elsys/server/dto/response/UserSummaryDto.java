@@ -1,0 +1,9 @@
+package com.elsys.server.dto.response;
+
+public record UserSummaryDto(
+        Long id,
+        String email,
+        String firstName,
+        String lastName,
+        String username
+) {}

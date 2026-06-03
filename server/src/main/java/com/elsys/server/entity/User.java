@@ -36,6 +36,18 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Column(unique = true)
+    private String username;
+
+    private String discordTag;
+
+    private String githubLink;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
+    private String education;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -43,6 +55,30 @@ public class User implements UserDetails {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_tags", joinColumns = @JoinColumn(name = "user_id"))
     private Set<UserTag> tags;
+
+    @ManyToMany
+    @JoinTable(
+        name = "user_skills",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "skill_tag_id")
+    )
+    private Set<SkillTag> skills;
+
+    public String getProfileUsername() {
+        return username;
+    }
+
+    public void updateProfile(String username, String discordTag, String githubLink, String bio, String education) {
+        this.username = username;
+        this.discordTag = discordTag;
+        this.githubLink = githubLink;
+        this.bio = bio;
+        this.education = education;
+    }
+
+    public void updateSkills(Set<SkillTag> newSkills) {
+        this.skills = new HashSet<>(newSkills);
+    }
 
     public void updateTags(Set<UserTag> newTags) {
         this.tags = new HashSet<>(newTags);

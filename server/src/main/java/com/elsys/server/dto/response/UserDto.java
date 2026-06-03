@@ -7,5 +7,11 @@ public record UserDto(
         String email,
         String firstName,
         String lastName,
-        List<TagDto> tags
+        String username,
+        String discordTag,
+        String githubLink,
+        String bio,
+        String education,
+        List<TagDto> tags,
+        List<SkillTagDto> skills
 ) {}

@@ -108,6 +108,33 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(
+            ResourceNotFoundException ex, HttpServletRequest request) {
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ErrorResponse.of(404, "Not Found", ex.getMessage(), request.getRequestURI())
+        );
+    }
+
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorizedAccess(
+            UnauthorizedAccessException ex, HttpServletRequest request) {
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                ErrorResponse.of(403, "Forbidden", ex.getMessage(), request.getRequestURI())
+        );
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateResource(
+            DuplicateResourceException ex, HttpServletRequest request) {
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                ErrorResponse.of(409, "Conflict", ex.getMessage(), request.getRequestURI())
+        );
+    }
+
     @ExceptionHandler({BadCredentialsException.class, DisabledException.class, LockedException.class})
     public ResponseEntity<ErrorResponse> handleAuthFailure(
             RuntimeException ex, HttpServletRequest request) {

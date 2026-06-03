@@ -4,7 +4,6 @@ import com.elsys.server.base.BaseUnitTest;
 import com.elsys.server.dto.request.LoginRequest;
 import com.elsys.server.dto.request.RegisterRequest;
 import com.elsys.server.dto.response.AuthResponse;
-import com.elsys.server.dto.response.TagDto;
 import com.elsys.server.dto.response.UserDto;
 import com.elsys.server.entity.User;
 import com.elsys.server.exception.EmailAlreadyExistsException;
@@ -34,7 +33,7 @@ class AuthServiceTest extends BaseUnitTest {
     @Mock UserService userService;
     @InjectMocks AuthService authService;
 
-    private final UserDto stubDto = new UserDto(1L, "john@test.com", "John", "Doe", List.of());
+    private final UserDto stubDto = new UserDto(1L, "john@test.com", "John", "Doe", null, null, null, null, null, List.of(), List.of());
 
     @Test
     void register_newEmail_returnsAuthResponse() {

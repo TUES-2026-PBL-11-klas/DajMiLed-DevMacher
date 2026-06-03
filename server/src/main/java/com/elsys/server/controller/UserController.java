@@ -2,6 +2,8 @@ package com.elsys.server.controller;
 
 import com.elsys.server.dto.request.TagRequest;
 import com.elsys.server.dto.request.TagsUpdateRequest;
+import com.elsys.server.dto.request.UserProfileUpdateRequest;
+import com.elsys.server.dto.response.SkillTagDto;
 import com.elsys.server.dto.response.TagDto;
 import com.elsys.server.dto.response.UserDto;
 import com.elsys.server.entity.TagCategory;
@@ -54,5 +56,31 @@ public class UserController {
             @AuthenticationPrincipal User currentUser,
             @Valid @RequestBody TagsUpdateRequest request) {
         return ResponseEntity.ok(userService.updateTags(currentUser.getUsername(), request));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<UserDto> updateProfile(
+            @AuthenticationPrincipal User currentUser,
+            @Valid @RequestBody UserProfileUpdateRequest request) {
+        return ResponseEntity.ok(userService.updateProfile(currentUser.getUsername(), request));
+    }
+
+    @PostMapping("/me/skills/{skillId}")
+    public ResponseEntity<UserDto> addSkill(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long skillId) {
+        return ResponseEntity.ok(userService.addSkillToUser(currentUser.getUsername(), skillId));
+    }
+
+    @DeleteMapping("/me/skills/{skillId}")
+    public ResponseEntity<UserDto> removeSkill(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long skillId) {
+        return ResponseEntity.ok(userService.removeSkillFromUser(currentUser.getUsername(), skillId));
+    }
+
+    @GetMapping("/me/skills")
+    public ResponseEntity<List<SkillTagDto>> getMySkills(@AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(userService.getUserSkills(currentUser.getUsername()));
     }
 }
