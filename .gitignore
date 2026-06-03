@@ -84,6 +84,11 @@ dist/
 nbdist/
 .nb-gradle/
 
+# Claude Code
+.claude/
+db/
+CLAUDE.md
+
 # Temporary files
 tmp/
 temp/
