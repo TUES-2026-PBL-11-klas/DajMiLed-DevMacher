@@ -181,7 +181,7 @@ public class UserService {
     }
 
     private User findByEmailOrThrow(String email) {
-        return userRepository.findByEmail(email)
+        return userRepository.findByEmailWithSkills(email)
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + email));
     }
 
