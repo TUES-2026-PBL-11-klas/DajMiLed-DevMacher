@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -17,22 +16,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   UserDto? _user;
   bool _loading = true;
   bool _editingSkills = false;
-  final _skillSearchCtrl = TextEditingController();
-  List<SkillTagDto> _suggestions = [];
-  String _skillQuery = '';
-  Timer? _debounce;
+  List<SkillTagDto> _allSkills = [];
+  bool _skillsLoading = false;
 
   @override
   void initState() {
     super.initState();
     _load();
-  }
-
-  @override
-  void dispose() {
-    _skillSearchCtrl.dispose();
-    _debounce?.cancel();
-    super.dispose();
   }
 
   Future<void> _load() async {
@@ -49,51 +39,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _onSkillSearchChanged(String q) {
-    _debounce?.cancel();
-    setState(() { _skillQuery = q.trim(); _suggestions = []; });
-    if (q.trim().isEmpty) return;
-    _debounce = Timer(const Duration(milliseconds: 350), () async {
-      final res = await ApiClient.searchSkills(q.trim());
-      if (!mounted) return;
-      if (res.statusCode == 200) {
-        final list = (jsonDecode(res.body) as List<dynamic>)
-            .map((s) => SkillTagDto.fromJson(s as Map<String, dynamic>))
-            .toList();
-        final current = _user?.skills ?? [];
-        setState(() => _suggestions = list
-            .where((s) => !current.any((c) => c.id == s.id))
-            .toList());
-      }
-    });
-  }
-
-  Future<void> _addSkill(SkillTagDto skill) async {
-    final res = await ApiClient.addSkillToUser(skill.id);
+  Future<void> _enterEditSkills() async {
+    setState(() { _editingSkills = true; _skillsLoading = true; });
+    final res = await ApiClient.getAllSkills();
     if (!mounted) return;
     if (res.statusCode == 200) {
-      final updated = UserDto.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
-      setState(() {
-        _user = updated;
-        _suggestions = [];
-        _skillQuery = '';
-        _skillSearchCtrl.clear();
-      });
+      final list = (jsonDecode(res.body) as List<dynamic>)
+          .map((s) => SkillTagDto.fromJson(s as Map<String, dynamic>))
+          .toList();
+      setState(() { _allSkills = list; _skillsLoading = false; });
+    } else {
+      setState(() => _skillsLoading = false);
     }
   }
 
-  Future<void> _createAndAddSkill(String name) async {
-    final createRes = await ApiClient.createSkill(name);
-    if (!mounted) return;
-    if (createRes.statusCode == 201) {
-      final skill = SkillTagDto.fromJson(
-          jsonDecode(createRes.body) as Map<String, dynamic>);
-      await _addSkill(skill);
-    }
-  }
-
-  Future<void> _removeSkill(SkillTagDto skill) async {
-    final res = await ApiClient.removeSkillFromUser(skill.id);
+  Future<void> _toggleSkill(SkillTagDto skill) async {
+    final has = _user!.skills.any((s) => s.id == skill.id);
+    final res = has
+        ? await ApiClient.removeSkillFromUser(skill.id)
+        : await ApiClient.addSkillToUser(skill.id);
     if (!mounted) return;
     if (res.statusCode == 200) {
       setState(() {
@@ -155,27 +119,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(22, 8, 22, 32),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // skills
-            _SkillsSection(
-              skills: user.skills,
-              editing: _editingSkills,
-              query: _skillQuery,
-              suggestions: _suggestions,
-              searchCtrl: _skillSearchCtrl,
-              onToggleEdit: () {
-                setState(() {
-                  _editingSkills = !_editingSkills;
-                  if (!_editingSkills) {
-                    _skillQuery = '';
-                    _suggestions = [];
-                    _skillSearchCtrl.clear();
-                  }
-                });
-              },
-              onSearchChanged: _onSkillSearchChanged,
-              onAdd: _addSkill,
-              onCreate: _createAndAddSkill,
-              onRemove: _removeSkill,
+            // skills section
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(child: Text('SKILLS', style: kLabel())),
+                  GestureDetector(
+                    onTap: _editingSkills
+                        ? () => setState(() { _editingSkills = false; _allSkills = []; })
+                        : _enterEditSkills,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: _editingSkills ? kAccentSoft : kSurface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: _editingSkills ? kAccent : kLine),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(_editingSkills ? Icons.check : Icons.edit,
+                            size: 13,
+                            color: _editingSkills ? kAccentInk : kInk3),
+                        const SizedBox(width: 4),
+                        Text(_editingSkills ? 'Done' : 'Edit',
+                            style: kBody(12,
+                                color: _editingSkills ? kAccentInk : kInk3,
+                                weight: FontWeight.w600)),
+                      ]),
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 11),
+
+                if (_editingSkills) ...[
+                  if (_skillsLoading)
+                    const Center(child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: CircularProgressIndicator(color: kAccent, strokeWidth: 2),
+                    ))
+                  else
+                    Wrap(
+                      spacing: 8, runSpacing: 8,
+                      children: _allSkills.map((skill) {
+                        final selected = user.skills.any((s) => s.id == skill.id);
+                        return GestureDetector(
+                          onTap: () => _toggleSkill(skill),
+                          child: DmTag(skill.name,
+                              tone: selected ? DmTagTone.accent : DmTagTone.outline),
+                        );
+                      }).toList(),
+                    ),
+                ] else ...[
+                  if (user.skills.isEmpty)
+                    Text('No skills added yet', style: kBody(14, color: kInk3))
+                  else
+                    Wrap(
+                      spacing: 8, runSpacing: 8,
+                      children: user.skills
+                          .map((s) => DmTag(s.name, tone: DmTagTone.accent))
+                          .toList(),
+                    ),
+                ],
+              ]),
             ),
 
             // social links
@@ -208,148 +213,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ]),
         ),
-      ]),
-    );
-  }
-}
-
-class _SkillsSection extends StatelessWidget {
-  final List<SkillTagDto> skills;
-  final bool editing;
-  final String query;
-  final List<SkillTagDto> suggestions;
-  final TextEditingController searchCtrl;
-  final VoidCallback onToggleEdit;
-  final ValueChanged<String> onSearchChanged;
-  final ValueChanged<SkillTagDto> onAdd;
-  final ValueChanged<String> onCreate;
-  final ValueChanged<SkillTagDto> onRemove;
-
-  const _SkillsSection({
-    required this.skills,
-    required this.editing,
-    required this.query,
-    required this.suggestions,
-    required this.searchCtrl,
-    required this.onToggleEdit,
-    required this.onSearchChanged,
-    required this.onAdd,
-    required this.onCreate,
-    required this.onRemove,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // section header row
-        Row(children: [
-          Expanded(child: Text('SKILLS', style: kLabel())),
-          GestureDetector(
-            onTap: onToggleEdit,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: editing ? kAccentSoft : kSurface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: editing ? kAccent : kLine),
-              ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(editing ? Icons.check : Icons.edit,
-                    size: 13, color: editing ? kAccentInk : kInk3),
-                const SizedBox(width: 4),
-                Text(editing ? 'Done' : 'Edit',
-                    style: kBody(12, color: editing ? kAccentInk : kInk3,
-                        weight: FontWeight.w600)),
-              ]),
-            ),
-          ),
-        ]),
-        const SizedBox(height: 11),
-
-        // skill chips
-        if (skills.isNotEmpty)
-          Wrap(spacing: 8, runSpacing: 8,
-            children: skills.map((s) => editing
-                ? GestureDetector(
-                    onTap: () => onRemove(s),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      DmTag(s.name, tone: DmTagTone.accent),
-                      const SizedBox(width: 3),
-                      const Icon(Icons.close, size: 13, color: kAccentInk),
-                    ]),
-                  )
-                : DmTag(s.name, tone: DmTagTone.accent),
-            ).toList()),
-
-        if (skills.isEmpty && !editing)
-          Text('No skills added yet', style: kBody(14, color: kInk3)),
-
-        // skill search (edit mode only)
-        if (editing) ...[
-          const SizedBox(height: 12),
-          TextField(
-            controller: searchCtrl,
-            onChanged: onSearchChanged,
-            style: kBody(15, color: kInk),
-            decoration: InputDecoration(
-              hintText: 'Search or create skills…',
-              hintStyle: kBody(15, color: kInk3),
-              prefixIcon: const Icon(Icons.search, color: kInk3, size: 20),
-              filled: true, fillColor: kSurface,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: kLine, width: 1.5)),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: kLine, width: 1.5)),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: kAccent, width: 2)),
-            ),
-          ),
-          if (query.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: kLine),
-                boxShadow: [BoxShadow(color: Colors.black.withAlpha(15),
-                    blurRadius: 12, offset: const Offset(0, 4))],
-              ),
-              child: Column(children: [
-                ...suggestions.take(5).map((s) => InkWell(
-                  onTap: () => onAdd(s),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    child: Row(children: [
-                      Expanded(child: Text(s.name,
-                          style: kBody(14, color: kInk, weight: FontWeight.w500))),
-                      const Icon(Icons.add, size: 16, color: kAccent),
-                    ]),
-                  ),
-                )),
-                if (suggestions.every((s) => s.name.toLowerCase() != query.toLowerCase()))
-                  InkWell(
-                    onTap: () => onCreate(query),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      child: Row(children: [
-                        const Icon(Icons.add_circle_outline, size: 16, color: kAccent),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text('Create "$query"',
-                            style: kBody(14, color: kAccentInk, weight: FontWeight.w600))),
-                      ]),
-                    ),
-                  ),
-              ]),
-            ),
-        ],
       ]),
     );
   }

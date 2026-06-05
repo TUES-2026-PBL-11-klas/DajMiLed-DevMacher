@@ -46,7 +46,6 @@ Future<String?> register(
   String firstName,
   String lastName,
   String password,
-  List<String> ownTags,
 ) async {
   try {
     final res = await ApiClient.post('/api/auth/register', {
@@ -54,7 +53,6 @@ Future<String?> register(
       'firstName': firstName,
       'lastName': lastName,
       'password': password,
-      'ownTags': ownTags,
     });
     if (res.statusCode == 201) {
       final body = jsonDecode(res.body) as Map<String, dynamic>;

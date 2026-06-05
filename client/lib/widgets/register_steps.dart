@@ -19,11 +19,12 @@ const _textConfigs = [
 
 class RegisterTextStep extends StatelessWidget {
   const RegisterTextStep({super.key, required this.step, required this.controller,
-    required this.fieldError, required this.onNext});
+    required this.fieldError, required this.onNext, this.loading = false});
   final int step;
   final TextEditingController controller;
   final String? fieldError;
   final VoidCallback onNext;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +74,12 @@ class RegisterTextStep extends StatelessWidget {
           Text(fieldError!, style: kBody(14, color: Colors.red.shade600)),
         ],
         const Spacer(),
-        DmBtn(label: 'Continue', full: true, onPressed: onNext),
+        DmBtn(
+          label: loading ? 'Creating account…' : 'Continue',
+          full: true,
+          disabled: loading,
+          onPressed: onNext,
+        ),
       ]),
     );
   }

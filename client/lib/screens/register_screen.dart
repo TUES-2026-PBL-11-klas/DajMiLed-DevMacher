@@ -12,7 +12,7 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  static const _total = 5;
+  static const _total = 4;
 
   int _step = 0;
   final _ctrl = TextEditingController();
@@ -23,7 +23,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _lastName = '';
   String _email = '';
   String _password = '';
-  final Set<String> _ownSkills = {};
 
   @override
   void dispose() {
@@ -53,18 +52,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_step == 0) { context.pop(); return; }
     final prev = _step - 1;
     setState(() { _step = prev; _fieldError = null; });
-    if (prev < 4) {
-      final text = [_firstName, _lastName, _email, _password][prev];
-      _ctrl.value = TextEditingValue(
-        text: text,
-        selection: TextSelection.collapsed(offset: text.length),
-      );
-    }
+    final text = [_firstName, _lastName, _email, _password][prev];
+    _ctrl.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
   }
 
   Future<void> _submit() async {
     setState(() { _loading = true; _fieldError = null; });
-    final err = await auth.register(_email, _firstName, _lastName, _password, _ownSkills.toList());
+    final err = await auth.register(_email, _firstName, _lastName, _password);
     if (!mounted) return;
     if (err != null) {
       setState(() { _loading = false; _fieldError = err; });
@@ -92,17 +89,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               duration: const Duration(milliseconds: 200),
               child: KeyedSubtree(
                 key: ValueKey(_step),
-                child: _step < 4
-                    ? RegisterTextStep(step: _step, controller: _ctrl,
-                        fieldError: _fieldError, onNext: _next)
-                    : RegisterSkillStep(
-                        selectedSkills: _ownSkills,
-                        onToggle: (s) => setState(() =>
-                            _ownSkills.contains(s) ? _ownSkills.remove(s) : _ownSkills.add(s)),
-                        fieldError: _fieldError,
-                        onNext: _next,
-                        loading: _loading,
-                      ),
+                child: RegisterTextStep(
+                  step: _step,
+                  controller: _ctrl,
+                  fieldError: _fieldError,
+                  onNext: _next,
+                  loading: _step == _total - 1 ? _loading : false,
+                ),
               ),
             ),
           ),
