@@ -46,7 +46,7 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 
-        User user = userRepository.findByEmail(request.email())
+        User user = userRepository.findByEmailWithSkills(request.email())
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + request.email()));
 
         return toAuthResponse(jwtService.generateToken(user), user);
