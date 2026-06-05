@@ -207,9 +207,19 @@ void main() {
       await tester.pumpWidget(_app(const RegisterScreen(), '/register'));
       await tester.pumpAndSettle();
 
-      // Tap Continue 4 times: steps 0→1, 1→2, 2→3, then step 3 submits
-      for (var i = 0; i < 4; i++) {
+      // Steps 0→1, 1→2, 2→3 via Continue
+      for (var i = 0; i < 3; i++) {
         await tester.tap(find.widgetWithText(DmBtn, 'Continue'));
+        await tester.pumpAndSettle();
+      }
+
+      // Step 3 (password) → creates account → advances to optional step 4
+      await tester.tap(find.widgetWithText(DmBtn, 'Continue'));
+      await tester.pumpAndSettle();
+
+      // Skip all 4 optional steps (discord, github, bio, education)
+      for (var i = 0; i < 4; i++) {
+        await tester.tap(find.widgetWithText(DmBtn, 'Skip'));
         await tester.pumpAndSettle();
       }
 
