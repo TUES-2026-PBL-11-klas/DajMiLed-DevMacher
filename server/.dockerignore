@@ -1,0 +1,8 @@
+target/
+.env
+.env.*
+*.log
+*.iml
+.idea/
+.mvn/
+!.mvn/wrapper/
