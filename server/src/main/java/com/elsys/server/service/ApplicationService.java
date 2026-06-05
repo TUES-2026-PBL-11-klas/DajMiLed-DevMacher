@@ -35,6 +35,9 @@ public class ApplicationService {
     public ApplicationDto apply(Long taskId, User currentUser) {
         ProjectTask task = projectTaskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("ProjectTask", taskId));
+        if (task.getProject().isOwnedBy(currentUser)) {
+            throw new UnauthorizedAccessException("You cannot apply to your own project");
+        }
         if (applicationRepository.existsByTaskIdAndApplicantId(taskId, currentUser.getId())) {
             throw new DuplicateResourceException("You have already applied to this task");
         }

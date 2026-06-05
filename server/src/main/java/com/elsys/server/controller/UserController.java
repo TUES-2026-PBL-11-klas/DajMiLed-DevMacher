@@ -2,7 +2,7 @@ package com.elsys.server.controller;
 
 import com.elsys.server.dto.request.UserProfileUpdateRequest;
 import com.elsys.server.dto.response.ApplicationDto;
-import com.elsys.server.dto.response.ProjectTaskDto;
+import com.elsys.server.dto.response.MatchedTaskDto;
 import com.elsys.server.dto.response.SkillTagDto;
 import com.elsys.server.dto.response.UserDto;
 import com.elsys.server.entity.User;
@@ -42,7 +42,7 @@ public class UserController {
     }
 
     @GetMapping("/me/relevant-tasks")
-    public ResponseEntity<List<ProjectTaskDto>> getRelevantTasks(@AuthenticationPrincipal User currentUser) {
+    public ResponseEntity<List<MatchedTaskDto>> getRelevantTasks(@AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(projectTaskService.getRelevantTasks(currentUser));
     }
 

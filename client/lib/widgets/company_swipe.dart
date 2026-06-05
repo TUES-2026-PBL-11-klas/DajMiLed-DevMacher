@@ -40,20 +40,19 @@ class _CompanySwipeState extends State<CompanySwipe>
 
   Future<void> _load() async {
     final results = await Future.wait([
-      ApiClient.get('/api/projects'),
+      ApiClient.getRelevantTasks(),
       ApiClient.getMyApplications(),
     ]);
     if (!mounted) return;
 
-    final projectsRes = results[0];
+    final matchedRes = results[0];
     final appsRes = results[1];
 
-    if (projectsRes.statusCode != 200) {
+    if (matchedRes.statusCode != 200) {
       setState(() => _loading = false);
       return;
     }
 
-    // collect already-applied task IDs
     final Set<int> applied = {};
     if (appsRes.statusCode == 200) {
       for (final a in jsonDecode(appsRes.body) as List<dynamic>) {
@@ -61,27 +60,23 @@ class _CompanySwipeState extends State<CompanySwipe>
       }
     }
 
-    final projects = (jsonDecode(projectsRes.body) as List<dynamic>)
-        .map((p) => ProjectDto.fromJson(p as Map<String, dynamic>))
+    final matched = (jsonDecode(matchedRes.body) as List<dynamic>)
+        .map((t) => MatchedTaskDto.fromJson(t as Map<String, dynamic>))
         .toList();
 
-    final tasks = <SwipeTask>[];
-    for (final p in projects) {
-      for (final t in p.tasks) {
-        if (!applied.contains(t.id)) {
-          tasks.add(SwipeTask(
-            projectId: p.id,
-            taskId: t.id,
-            projectTitle: p.title,
-            ownerName: p.owner.displayName,
-            taskTitle: t.title,
-            description: t.description,
-            skills: t.requiredSkills.map((s) => s.name).toList(),
-            color: colorFromTitle(p.title),
-          ));
-        }
-      }
-    }
+    final tasks = matched
+        .where((t) => !applied.contains(t.taskId))
+        .map((t) => SwipeTask(
+              projectId: t.projectId,
+              taskId: t.taskId,
+              projectTitle: t.projectTitle,
+              ownerName: t.ownerName,
+              taskTitle: t.title,
+              description: t.description,
+              skills: t.requiredSkills.map((s) => s.name).toList(),
+              color: colorFromTitle(t.projectTitle),
+            ))
+        .toList();
 
     setState(() {
       _tasks = tasks;

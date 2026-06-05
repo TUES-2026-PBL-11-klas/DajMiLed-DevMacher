@@ -172,6 +172,36 @@ class ProjectTaskDto {
       );
 }
 
+class MatchedTaskDto {
+  final int taskId;
+  final int projectId;
+  final String projectTitle;
+  final String ownerName;
+  final String title;
+  final String? description;
+  final List<SkillTagDto> requiredSkills;
+  const MatchedTaskDto({
+    required this.taskId,
+    required this.projectId,
+    required this.projectTitle,
+    required this.ownerName,
+    required this.title,
+    this.description,
+    required this.requiredSkills,
+  });
+  factory MatchedTaskDto.fromJson(Map<String, dynamic> j) => MatchedTaskDto(
+        taskId: (j['taskId'] as num).toInt(),
+        projectId: (j['projectId'] as num).toInt(),
+        projectTitle: j['projectTitle'] as String,
+        ownerName: j['ownerName'] as String,
+        title: j['title'] as String,
+        description: j['description'] as String?,
+        requiredSkills: (j['requiredSkills'] as List<dynamic>? ?? [])
+            .map((s) => SkillTagDto.fromJson(s as Map<String, dynamic>))
+            .toList(),
+      );
+}
+
 class ProjectDto {
   final int id;
   final UserSummaryDto owner;
