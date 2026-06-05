@@ -23,12 +23,12 @@ public class SkillTagService {
 
     @Transactional
     public SkillTagDto createSkill(SkillTagRequest request) {
-        String normalizedName = request.name().trim().toLowerCase();
-        if (skillTagRepository.existsByName(normalizedName)) {
-            throw new DuplicateResourceException("Skill with name '" + normalizedName + "' already exists");
+        String name = request.name().trim();
+        if (skillTagRepository.existsByName(name)) {
+            throw new DuplicateResourceException("Skill with name '" + name + "' already exists");
         }
         SkillTag skillTag = SkillTag.builder()
-                .name(normalizedName)
+                .name(name)
                 .build();
         return toDto(skillTagRepository.save(skillTag));
     }

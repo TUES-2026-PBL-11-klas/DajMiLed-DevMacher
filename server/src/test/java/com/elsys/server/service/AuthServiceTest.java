@@ -18,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,14 +32,13 @@ class AuthServiceTest extends BaseUnitTest {
     @Mock UserService userService;
     @InjectMocks AuthService authService;
 
-    private final UserDto stubDto = new UserDto(1L, "john@test.com", "John", "Doe", null, null, null, null, null, List.of(), List.of());
+    private final UserDto stubDto = new UserDto(1L, "john@test.com", "John", "Doe", null, null, null, null, null, List.of());
 
     @Test
     void register_newEmail_returnsAuthResponse() {
         var req = new RegisterRequest("john@test.com", "John", "Doe", "password123");
         given(userRepository.existsByEmail(req.email())).willReturn(false);
         given(passwordEncoder.encode(req.password())).willReturn("hashed");
-        given(userService.buildInitialTags(any(), any())).willReturn(Set.of());
         given(userRepository.save(any(User.class))).willAnswer(inv -> inv.getArgument(0));
         given(jwtService.generateToken(any())).willReturn("token");
         given(jwtService.getExpirationMs()).willReturn(3600000L);
@@ -70,7 +68,7 @@ class AuthServiceTest extends BaseUnitTest {
         var req = new LoginRequest("john@test.com", "password123");
         User user = User.builder()
                 .email("john@test.com").firstName("John").lastName("Doe")
-                .password("hashed").tags(Set.of()).build();
+                .password("hashed").build();
         given(userRepository.findByEmailWithSkills(req.email())).willReturn(Optional.of(user));
         given(jwtService.generateToken(user)).willReturn("token");
         given(jwtService.getExpirationMs()).willReturn(3600000L);

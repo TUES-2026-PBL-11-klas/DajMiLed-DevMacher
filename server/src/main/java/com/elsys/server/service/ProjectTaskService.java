@@ -1,6 +1,7 @@
 package com.elsys.server.service;
 
 import com.elsys.server.dto.request.ProjectTaskRequest;
+import com.elsys.server.dto.response.MatchedTaskDto;
 import com.elsys.server.dto.response.ProjectTaskDto;
 import com.elsys.server.dto.response.SkillTagDto;
 import com.elsys.server.entity.Project;
@@ -16,7 +17,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -87,6 +91,53 @@ public class ProjectTaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("SkillTag", skillId));
         task.removeSkill(skill);
         return toDto(projectTaskRepository.save(task));
+    }
+
+    @Transactional(readOnly = true)
+    public List<MatchedTaskDto> getRelevantTasks(User user) {
+        Set<SkillTag> skills = user.getSkills() != null ? user.getSkills() : Set.of();
+
+        if (skills.isEmpty()) {
+            return projectTaskRepository.findAllExcludingOwner(user).stream()
+                    .map(this::toMatchedDto)
+                    .toList();
+        }
+
+        List<Long> ids = projectTaskRepository.findRelevantTaskIds(skills, user);
+        if (ids.isEmpty()) {
+            return projectTaskRepository.findAllExcludingOwner(user).stream()
+                    .map(this::toMatchedDto)
+                    .toList();
+        }
+
+        Set<Long> skillIds = skills.stream().map(SkillTag::getId).collect(Collectors.toSet());
+
+        return projectTaskRepository.findByIdsWithSkills(ids).stream()
+                .sorted(Comparator.comparingLong((ProjectTask t) ->
+                        t.getRequiredSkills().stream()
+                                .filter(s -> skillIds.contains(s.getId()))
+                                .count()
+                ).reversed())
+                .map(this::toMatchedDto)
+                .toList();
+    }
+
+    private MatchedTaskDto toMatchedDto(ProjectTask task) {
+        List<SkillTagDto> skills = task.getRequiredSkills().stream()
+                .map(s -> new SkillTagDto(s.getId(), s.getName()))
+                .toList();
+        String ownerName = task.getProject().getOwner().getProfileUsername() != null
+                ? task.getProject().getOwner().getProfileUsername()
+                : task.getProject().getOwner().getFirstName() + " " + task.getProject().getOwner().getLastName();
+        return new MatchedTaskDto(
+                task.getId(),
+                task.getProject().getId(),
+                task.getProject().getTitle(),
+                ownerName,
+                task.getTitle(),
+                task.getDescription(),
+                skills
+        );
     }
 
     private ProjectTask findTaskOrThrow(Long taskId) {

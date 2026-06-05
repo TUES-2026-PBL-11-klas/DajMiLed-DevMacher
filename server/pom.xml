@@ -29,9 +29,9 @@
 	<properties>
 		<java.version>21</java.version>
 		<jjwt.version>0.12.6</jjwt.version>
-		<mapstruct.version>1.6.3</mapstruct.version>
 		<lombok.version>1.18.38</lombok.version>
 		<bucket4j.version>8.10.1</bucket4j.version>
+		<spotbugs-maven-plugin.version>4.9.3.0</spotbugs-maven-plugin.version>
 	</properties>
 	<dependencies>
 
@@ -97,13 +97,6 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- MapStruct (DTO mapping) -->
-		<dependency>
-			<groupId>org.mapstruct</groupId>
-			<artifactId>mapstruct</artifactId>
-			<version>${mapstruct.version}</version>
-		</dependency>
-
 		<!-- Rate Limiting -->
 		<dependency>
 			<groupId>com.bucket4j</groupId>
@@ -117,6 +110,12 @@
 			<artifactId>spring-boot-devtools</artifactId>
 			<scope>runtime</scope>
 			<optional>true</optional>
+		</dependency>
+
+		<!-- Prometheus metrics -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
 
 		<!-- Test -->
@@ -162,12 +161,18 @@
 							<artifactId>lombok</artifactId>
 							<version>${lombok.version}</version>
 						</path>
-						<path>
-							<groupId>org.mapstruct</groupId>
-							<artifactId>mapstruct-processor</artifactId>
-							<version>${mapstruct.version}</version>
-						</path>
 					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<version>${spotbugs-maven-plugin.version}</version>
+				<configuration>
+					<effort>Max</effort>
+					<threshold>Medium</threshold>
+					<failOnError>true</failOnError>
+					<excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
 				</configuration>
 			</plugin>
 		</plugins>

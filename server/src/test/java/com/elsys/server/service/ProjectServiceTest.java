@@ -69,7 +69,7 @@ class ProjectServiceTest extends BaseUnitTest {
         Project project = createProject(1L, user);
         ProjectRequest request = new ProjectRequest("New Title", "New Desc");
         
-        given(projectRepository.findById(1L)).willReturn(Optional.of(project));
+        given(projectRepository.findByIdWithDetails(1L)).willReturn(Optional.of(project));
         given(projectRepository.save(any(Project.class))).willReturn(project);
 
         ProjectDto result = projectService.updateProject(1L, user, request);
@@ -85,7 +85,7 @@ class ProjectServiceTest extends BaseUnitTest {
         Project project = createProject(1L, user1);
         ProjectRequest request = new ProjectRequest("New Title", "New Desc");
         
-        given(projectRepository.findById(1L)).willReturn(Optional.of(project));
+        given(projectRepository.findByIdWithDetails(1L)).willReturn(Optional.of(project));
 
         assertThatThrownBy(() -> projectService.updateProject(1L, user2, request))
                 .isInstanceOf(UnauthorizedAccessException.class);
@@ -96,7 +96,7 @@ class ProjectServiceTest extends BaseUnitTest {
         User user = createUser(1L);
         Project project = createProject(1L, user);
         
-        given(projectRepository.findById(1L)).willReturn(Optional.of(project));
+        given(projectRepository.findByIdWithDetails(1L)).willReturn(Optional.of(project));
 
         ProjectDto result = projectService.getProject(1L);
 
@@ -105,7 +105,7 @@ class ProjectServiceTest extends BaseUnitTest {
 
     @Test
     void getProject_nonExistingId_throwsException() {
-        given(projectRepository.findById(1L)).willReturn(Optional.empty());
+        given(projectRepository.findByIdWithDetails(1L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> projectService.getProject(1L))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -116,7 +116,7 @@ class ProjectServiceTest extends BaseUnitTest {
         User user = createUser(1L);
         Project project = createProject(1L, user);
         
-        given(projectRepository.findById(1L)).willReturn(Optional.of(project));
+        given(projectRepository.findByIdWithDetails(1L)).willReturn(Optional.of(project));
 
         projectService.deleteProject(1L, user);
 
@@ -127,12 +127,14 @@ class ProjectServiceTest extends BaseUnitTest {
     void getAllProjects_returnsList() {
         User user = createUser(1L);
         Project project = createProject(1L, user);
-        
-        given(projectRepository.findAll()).willReturn(List.of(project));
 
-        List<ProjectDto> result = projectService.getAllProjects();
+        given(projectRepository.findPagedIds(any())).willReturn(List.of(1L));
+        given(projectRepository.count()).willReturn(1L);
+        given(projectRepository.findByIdsWithDetails(List.of(1L))).willReturn(List.of(project));
 
-        assertThat(result).hasSize(1);
-        assertThat(result.getFirst().title()).isEqualTo("Project Title");
+        var result = projectService.getAllProjects(0, 10);
+
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().getFirst().title()).isEqualTo("Project Title");
     }
 }

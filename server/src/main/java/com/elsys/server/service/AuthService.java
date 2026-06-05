@@ -34,7 +34,6 @@ public class AuthService {
                 .firstName(request.firstName())
                 .lastName(request.lastName())
                 .password(passwordEncoder.encode(request.password()))
-                .tags(userService.buildInitialTags(request.ownTags(), request.searchingForTags()))
                 .build();
 
         userRepository.save(user);

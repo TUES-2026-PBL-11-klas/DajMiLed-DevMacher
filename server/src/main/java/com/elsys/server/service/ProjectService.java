@@ -1,6 +1,7 @@
 package com.elsys.server.service;
 
 import com.elsys.server.dto.request.ProjectRequest;
+import com.elsys.server.dto.response.PageResponse;
 import com.elsys.server.dto.response.ProjectDto;
 import com.elsys.server.dto.response.ProjectTaskDto;
 import com.elsys.server.dto.response.UserSummaryDto;
@@ -10,9 +11,11 @@ import com.elsys.server.exception.ResourceNotFoundException;
 import com.elsys.server.exception.UnauthorizedAccessException;
 import com.elsys.server.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -31,7 +34,7 @@ public class ProjectService {
         );
         List<ProjectTaskDto> tasks = project.getTasks() == null ? List.of() :
                 project.getTasks().stream().map(projectTaskService::toDto).toList();
-        
+
         return new ProjectDto(
                 project.getId(),
                 ownerDto,
@@ -67,21 +70,30 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public ProjectDto getProject(Long projectId) {
-        return toDto(findProjectOrThrow(projectId));
+        return toDto(projectRepository.findByIdWithDetails(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId)));
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectDto> getAllProjects() {
-        return projectRepository.findAll().stream().map(this::toDto).toList();
+    public PageResponse<ProjectDto> getAllProjects(int page, int size) {
+        List<Long> ids = projectRepository.findPagedIds(PageRequest.of(page, size));
+        if (ids.isEmpty()) return new PageResponse<>(List.of(), true);
+        long total = projectRepository.count();
+        boolean last = (long) (page + 1) * size >= total;
+        List<ProjectDto> content = projectRepository.findByIdsWithDetails(ids).stream()
+                .sorted(Comparator.comparingLong(Project::getId).reversed())
+                .map(this::toDto)
+                .toList();
+        return new PageResponse<>(content, last);
     }
 
     @Transactional(readOnly = true)
     public List<ProjectDto> getProjectsByOwner(Long ownerId) {
-        return projectRepository.findByOwnerId(ownerId).stream().map(this::toDto).toList();
+        return projectRepository.findByOwnerIdWithDetails(ownerId).stream().map(this::toDto).toList();
     }
 
     private Project findProjectOrThrow(Long projectId) {
-        return projectRepository.findById(projectId)
+        return projectRepository.findByIdWithDetails(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
     }
 

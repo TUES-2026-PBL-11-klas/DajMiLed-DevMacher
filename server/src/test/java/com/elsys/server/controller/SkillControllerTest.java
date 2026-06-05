@@ -33,14 +33,14 @@ class SkillControllerTest extends BaseControllerTest {
     @Test
     void createSkill_returns201() throws Exception {
         String token = getToken("admin@test.com");
-        SkillTagRequest req = new SkillTagRequest("Java");
+        SkillTagRequest req = new SkillTagRequest("Erlang");
 
         mockMvc.perform(post("/api/skills")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(req)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("java"));
+                .andExpect(jsonPath("$.name").value("Erlang"));
     }
 
     @Test
@@ -56,11 +56,11 @@ class SkillControllerTest extends BaseControllerTest {
         mockMvc.perform(post("/api/skills")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(new SkillTagRequest("Python"))))
+                        .content(json(new SkillTagRequest("Haskell"))))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/skills/search").param("q", "py"))
+        mockMvc.perform(get("/api/skills/search").param("q", "hask"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("python"));
+                .andExpect(jsonPath("$[0].name").value("Haskell"));
     }
 }
