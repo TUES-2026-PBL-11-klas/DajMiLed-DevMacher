@@ -37,7 +37,7 @@ class UserServiceTest extends BaseUnitTest {
     }
 
     private void givenUserWith(Set<UserTag> tags) {
-        given(userRepository.findByEmail("john@test.com"))
+        given(userRepository.findByEmailWithSkills("john@test.com"))
                 .willReturn(Optional.of(userWithTags(tags)));
     }
 

@@ -71,7 +71,7 @@ class AuthServiceTest extends BaseUnitTest {
         User user = User.builder()
                 .email("john@test.com").firstName("John").lastName("Doe")
                 .password("hashed").tags(Set.of()).build();
-        given(userRepository.findByEmail(req.email())).willReturn(Optional.of(user));
+        given(userRepository.findByEmailWithSkills(req.email())).willReturn(Optional.of(user));
         given(jwtService.generateToken(user)).willReturn("token");
         given(jwtService.getExpirationMs()).willReturn(3600000L);
         given(userService.toDto(user)).willReturn(stubDto);
