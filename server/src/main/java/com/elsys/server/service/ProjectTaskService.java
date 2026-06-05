@@ -16,7 +16,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -87,6 +91,31 @@ public class ProjectTaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("SkillTag", skillId));
         task.removeSkill(skill);
         return toDto(projectTaskRepository.save(task));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProjectTaskDto> getRelevantTasks(User user) {
+        Set<SkillTag> skills = user.getSkills() != null ? user.getSkills() : Set.of();
+
+        if (skills.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> ids = projectTaskRepository.findRelevantTaskIds(skills, user);
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> skillIds = skills.stream().map(SkillTag::getId).collect(Collectors.toSet());
+
+        return projectTaskRepository.findByIdsWithSkills(ids).stream()
+                .sorted(Comparator.comparingLong((ProjectTask t) ->
+                        t.getRequiredSkills().stream()
+                                .filter(s -> skillIds.contains(s.getId()))
+                                .count()
+                ).reversed())
+                .map(this::toDto)
+                .toList();
     }
 
     private ProjectTask findTaskOrThrow(Long taskId) {

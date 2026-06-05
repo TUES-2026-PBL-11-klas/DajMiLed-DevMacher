@@ -72,33 +72,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(TagAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleTagAlreadyExists(
-            TagAlreadyExistsException ex, HttpServletRequest request) {
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                ErrorResponse.of(409, "Conflict", ex.getMessage(), request.getRequestURI())
-        );
-    }
-
-    @ExceptionHandler(TagNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleTagNotFound(
-            TagNotFoundException ex, HttpServletRequest request) {
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                ErrorResponse.of(404, "Not Found", ex.getMessage(), request.getRequestURI())
-        );
-    }
-
-    @ExceptionHandler(TagLimitExceededException.class)
-    public ResponseEntity<ErrorResponse> handleTagLimitExceeded(
-            TagLimitExceededException ex, HttpServletRequest request) {
-
-        return ResponseEntity.badRequest().body(
-                ErrorResponse.of(400, "Bad Request", ex.getMessage(), request.getRequestURI())
-        );
-    }
-
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleEmailExists(
             EmailAlreadyExistsException ex, HttpServletRequest request) {

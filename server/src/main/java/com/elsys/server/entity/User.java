@@ -52,10 +52,6 @@ public class User implements UserDetails {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_tags", joinColumns = @JoinColumn(name = "user_id"))
-    private Set<UserTag> tags;
-
     @ManyToMany
     @JoinTable(
         name = "user_skills",
@@ -78,10 +74,6 @@ public class User implements UserDetails {
 
     public void updateSkills(Set<SkillTag> newSkills) {
         this.skills = new HashSet<>(newSkills);
-    }
-
-    public void updateTags(Set<UserTag> newTags) {
-        this.tags = new HashSet<>(newTags);
     }
 
     @Override
