@@ -3,11 +3,13 @@ package com.elsys.server.controller;
 import com.elsys.server.dto.request.TagRequest;
 import com.elsys.server.dto.request.TagsUpdateRequest;
 import com.elsys.server.dto.request.UserProfileUpdateRequest;
+import com.elsys.server.dto.response.ApplicationDto;
 import com.elsys.server.dto.response.SkillTagDto;
 import com.elsys.server.dto.response.TagDto;
 import com.elsys.server.dto.response.UserDto;
 import com.elsys.server.entity.TagCategory;
 import com.elsys.server.entity.User;
+import com.elsys.server.service.ApplicationService;
 import com.elsys.server.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,10 +26,21 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final ApplicationService applicationService;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserById(id));
+    }
 
     @GetMapping("/me")
     public ResponseEntity<UserDto> getMe(@AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(userService.toDto(currentUser));
+    }
+
+    @GetMapping("/me/applications")
+    public ResponseEntity<List<ApplicationDto>> getMyApplications(@AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(applicationService.getMyApplications(currentUser.getId()));
     }
 
     @GetMapping("/me/tags")

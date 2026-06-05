@@ -180,6 +180,13 @@ public class UserService {
                 user.getSkills().stream().map(skillTagService::toDto).toList();
     }
 
+    @Transactional(readOnly = true)
+    public UserDto getUserById(Long id) {
+        User user = userRepository.findByIdWithSkills(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        return toDto(user);
+    }
+
     private User findByEmailOrThrow(String email) {
         return userRepository.findByEmailWithSkills(email)
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + email));
