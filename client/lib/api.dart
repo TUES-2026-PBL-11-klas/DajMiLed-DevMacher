@@ -80,6 +80,9 @@ class ApiClient {
 
   static Future<http.Response> removeSkillFromProject(int projectId, int skillId) =>
       delete('/api/projects/$projectId/skills/$skillId');
+
+  static Future<http.Response> getRelevantTasks() =>
+      get('/api/users/me/relevant-tasks');
 }
 
 class SkillTagDto {
@@ -88,14 +91,6 @@ class SkillTagDto {
   const SkillTagDto({required this.id, required this.name});
   factory SkillTagDto.fromJson(Map<String, dynamic> j) =>
       SkillTagDto(id: (j['id'] as num).toInt(), name: j['name'] as String);
-}
-
-class TagDto {
-  final String name;
-  final String category;
-  const TagDto({required this.name, required this.category});
-  factory TagDto.fromJson(Map<String, dynamic> j) =>
-      TagDto(name: j['name'] as String, category: j['category'] as String);
 }
 
 class UserSummaryDto {
@@ -122,7 +117,6 @@ class UserDto {
   final int id;
   final String email, firstName, lastName;
   final String? username, discordTag, githubLink, bio, education;
-  final List<TagDto> tags;
   final List<SkillTagDto> skills;
   const UserDto(
       {required this.id,
@@ -134,7 +128,6 @@ class UserDto {
       this.githubLink,
       this.bio,
       this.education,
-      required this.tags,
       required this.skills});
   factory UserDto.fromJson(Map<String, dynamic> j) => UserDto(
         id: (j['id'] as num).toInt(),
@@ -146,9 +139,6 @@ class UserDto {
         githubLink: j['githubLink'] as String?,
         bio: j['bio'] as String?,
         education: j['education'] as String?,
-        tags: (j['tags'] as List<dynamic>? ?? [])
-            .map((t) => TagDto.fromJson(t as Map<String, dynamic>))
-            .toList(),
         skills: (j['skills'] as List<dynamic>? ?? [])
             .map((s) => SkillTagDto.fromJson(s as Map<String, dynamic>))
             .toList(),

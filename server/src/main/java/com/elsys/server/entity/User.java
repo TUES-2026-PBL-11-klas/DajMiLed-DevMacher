@@ -52,17 +52,14 @@ public class User implements UserDetails {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_tags", joinColumns = @JoinColumn(name = "user_id"))
-    private Set<UserTag> tags;
-
+    @Builder.Default
     @ManyToMany
     @JoinTable(
         name = "user_skills",
         joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "skill_tag_id")
     )
-    private Set<SkillTag> skills;
+    private Set<SkillTag> skills = new HashSet<>();
 
     public String getProfileUsername() {
         return username;
@@ -78,10 +75,6 @@ public class User implements UserDetails {
 
     public void updateSkills(Set<SkillTag> newSkills) {
         this.skills = new HashSet<>(newSkills);
-    }
-
-    public void updateTags(Set<UserTag> newTags) {
-        this.tags = new HashSet<>(newTags);
     }
 
     @Override

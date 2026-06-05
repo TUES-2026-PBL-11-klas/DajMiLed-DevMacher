@@ -1,19 +1,16 @@
 package com.elsys.server.controller;
 
-import com.elsys.server.dto.request.TagRequest;
-import com.elsys.server.dto.request.TagsUpdateRequest;
 import com.elsys.server.dto.request.UserProfileUpdateRequest;
 import com.elsys.server.dto.response.ApplicationDto;
+import com.elsys.server.dto.response.ProjectTaskDto;
 import com.elsys.server.dto.response.SkillTagDto;
-import com.elsys.server.dto.response.TagDto;
 import com.elsys.server.dto.response.UserDto;
-import com.elsys.server.entity.TagCategory;
 import com.elsys.server.entity.User;
 import com.elsys.server.service.ApplicationService;
+import com.elsys.server.service.ProjectTaskService;
 import com.elsys.server.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +24,7 @@ public class UserController {
 
     private final UserService userService;
     private final ApplicationService applicationService;
+    private final ProjectTaskService projectTaskService;
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
@@ -43,32 +41,9 @@ public class UserController {
         return ResponseEntity.ok(applicationService.getMyApplications(currentUser.getId()));
     }
 
-    @GetMapping("/me/tags")
-    public ResponseEntity<List<TagDto>> getTags(@AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(userService.listTags(currentUser.getUsername()));
-    }
-
-    @PostMapping("/me/tags")
-    public ResponseEntity<UserDto> addTag(
-            @AuthenticationPrincipal User currentUser,
-            @Valid @RequestBody TagRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(userService.addTag(currentUser.getUsername(), request));
-    }
-
-    @DeleteMapping("/me/tags/{category}/{name}")
-    public ResponseEntity<UserDto> deleteTag(
-            @AuthenticationPrincipal User currentUser,
-            @PathVariable TagCategory category,
-            @PathVariable String name) {
-        return ResponseEntity.ok(userService.deleteTag(currentUser.getUsername(), category, name));
-    }
-
-    @PutMapping("/me/tags")
-    public ResponseEntity<UserDto> replaceTags(
-            @AuthenticationPrincipal User currentUser,
-            @Valid @RequestBody TagsUpdateRequest request) {
-        return ResponseEntity.ok(userService.updateTags(currentUser.getUsername(), request));
+    @GetMapping("/me/relevant-tasks")
+    public ResponseEntity<List<ProjectTaskDto>> getRelevantTasks(@AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(projectTaskService.getRelevantTasks(currentUser));
     }
 
     @PutMapping("/me")

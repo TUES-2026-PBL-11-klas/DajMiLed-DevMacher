@@ -12,6 +12,5 @@ public record UserDto(
         String githubLink,
         String bio,
         String education,
-        List<TagDto> tags,
         List<SkillTagDto> skills
 ) {}

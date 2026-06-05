@@ -99,15 +99,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
 
-            // tags
-            if (user.tags.isNotEmpty) ...[
-              DmSection(
-                title: 'Tags',
-                child: Wrap(spacing: 8, runSpacing: 8,
-                  children: user.tags.map((t) => DmTag(t.name, tone: DmTagTone.outline)).toList()),
-              ),
-            ],
-
             // social links
             if (user.githubLink != null || user.discordTag != null)
               DmSection(
