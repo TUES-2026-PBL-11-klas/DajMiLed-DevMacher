@@ -15,12 +15,7 @@ class CreateProjectScreen extends StatefulWidget {
 class _CreateProjectScreenState extends State<CreateProjectScreen> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
-  final _skillSearchCtrl = TextEditingController();
   final List<_TaskDraft> _tasks = [];
-  final List<SkillTagDto> _projectSkills = [];
-  List<SkillTagDto> _skillSuggestions = [];
-  String _skillQuery = '';
-  Timer? _skillDebounce;
   bool _submitting = false;
   String? _error;
 
@@ -28,45 +23,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   void dispose() {
     _titleCtrl.dispose();
     _descCtrl.dispose();
-    _skillSearchCtrl.dispose();
-    _skillDebounce?.cancel();
     super.dispose();
-  }
-
-  void _onSkillSearchChanged(String q) {
-    _skillDebounce?.cancel();
-    setState(() { _skillQuery = q.trim(); _skillSuggestions = []; });
-    if (q.trim().isEmpty) return;
-    _skillDebounce = Timer(const Duration(milliseconds: 350), () async {
-      final res = await ApiClient.searchSkills(q.trim());
-      if (!mounted) return;
-      if (res.statusCode == 200) {
-        final list = (jsonDecode(res.body) as List<dynamic>)
-            .map((s) => SkillTagDto.fromJson(s as Map<String, dynamic>))
-            .toList();
-        setState(() => _skillSuggestions = list
-            .where((s) => !_projectSkills.any((a) => a.id == s.id))
-            .toList());
-      }
-    });
-  }
-
-  void _addProjectSkill(SkillTagDto skill) {
-    setState(() {
-      _projectSkills.add(skill);
-      _skillSuggestions = [];
-      _skillQuery = '';
-      _skillSearchCtrl.clear();
-    });
-  }
-
-  Future<void> _createAndAddProjectSkill(String name) async {
-    final res = await ApiClient.createSkill(name);
-    if (!mounted) return;
-    if (res.statusCode == 201) {
-      _addProjectSkill(SkillTagDto.fromJson(
-          jsonDecode(res.body) as Map<String, dynamic>));
-    }
   }
 
   void _addTask() {
@@ -98,13 +55,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     final project = ProjectDto.fromJson(
         jsonDecode(projectRes.body) as Map<String, dynamic>);
 
-    // 2. Add project-level skills
-    for (final skill in _projectSkills) {
-      await ApiClient.addSkillToProject(project.id, skill.id);
-      if (!mounted) return;
-    }
-
-    // 3. Create each task
+    // 2. Create each task
     for (final draft in _tasks) {
       final taskTitle = draft.titleCtrl.text.trim();
       if (taskTitle.isEmpty) continue;
@@ -117,7 +68,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       final task = ProjectTaskDto.fromJson(
           jsonDecode(taskRes.body) as Map<String, dynamic>);
 
-      // 4. Add skills to task
+      // 3. Add skills to task
       for (final skill in draft.skills) {
         await ApiClient.addSkillToTask(project.id, task.id, skill.id);
         if (!mounted) return;
@@ -145,88 +96,6 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           const SizedBox(height: 14),
           _Field(label: 'Description', controller: _descCtrl,
               hint: 'What is this project about?', maxLines: 3),
-
-          const SizedBox(height: 28),
-          _SectionHeader('Required Skills'),
-          const SizedBox(height: 12),
-
-          // Selected project skills
-          if (_projectSkills.isNotEmpty) ...[
-            Wrap(spacing: 8, runSpacing: 8,
-              children: _projectSkills.map((s) => GestureDetector(
-                onTap: () => setState(() =>
-                    _projectSkills.removeWhere((x) => x.id == s.id)),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  DmTag(s.name, tone: DmTagTone.accent),
-                  const SizedBox(width: 3),
-                  const Icon(Icons.close, size: 13, color: kAccentInk),
-                ]),
-              )).toList()),
-            const SizedBox(height: 10),
-          ],
-
-          // Project skill search
-          TextField(
-            controller: _skillSearchCtrl,
-            onChanged: _onSkillSearchChanged,
-            style: kBody(15, color: kInk),
-            decoration: InputDecoration(
-              hintText: 'Search or create skills…',
-              hintStyle: kBody(15, color: kInk3),
-              prefixIcon: const Icon(Icons.search, color: kInk3, size: 20),
-              filled: true, fillColor: kSurface,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: kLine, width: 1.5)),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: kLine, width: 1.5)),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: kAccent, width: 2)),
-            ),
-          ),
-          if (_skillQuery.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: kLine),
-                boxShadow: [BoxShadow(color: Colors.black.withAlpha(15),
-                    blurRadius: 12, offset: const Offset(0, 4))],
-              ),
-              child: Column(children: [
-                ..._skillSuggestions.take(5).map((s) => InkWell(
-                  onTap: () => _addProjectSkill(s),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    child: Row(children: [
-                      Expanded(child: Text(s.name,
-                          style: kBody(14, color: kInk, weight: FontWeight.w500))),
-                      const Icon(Icons.add, size: 16, color: kAccent),
-                    ]),
-                  ),
-                )),
-                if (_skillSuggestions.every((s) =>
-                    s.name.toLowerCase() != _skillQuery.toLowerCase()))
-                  InkWell(
-                    onTap: () => _createAndAddProjectSkill(_skillQuery),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      child: Row(children: [
-                        const Icon(Icons.add_circle_outline, size: 16, color: kAccent),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text('Create "$_skillQuery"',
-                          style: kBody(14, color: kAccentInk, weight: FontWeight.w600))),
-                      ]),
-                    ),
-                  ),
-              ]),
-            ),
 
           const SizedBox(height: 28),
           _SectionHeader('Tasks'),

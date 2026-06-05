@@ -75,12 +75,6 @@ class ApiClient {
   static Future<http.Response> createSkill(String name) =>
       post('/api/skills', {'name': name});
 
-  static Future<http.Response> addSkillToProject(int projectId, int skillId) =>
-      post('/api/projects/$projectId/skills/$skillId', {});
-
-  static Future<http.Response> removeSkillFromProject(int projectId, int skillId) =>
-      delete('/api/projects/$projectId/skills/$skillId');
-
   static Future<http.Response> getRelevantTasks() =>
       get('/api/users/me/relevant-tasks');
 }
@@ -175,14 +169,12 @@ class ProjectDto {
   final String title;
   final String? description;
   final List<ProjectTaskDto> tasks;
-  final List<SkillTagDto> skills;
   const ProjectDto(
       {required this.id,
       required this.owner,
       required this.title,
       this.description,
-      required this.tasks,
-      required this.skills});
+      required this.tasks});
   factory ProjectDto.fromJson(Map<String, dynamic> j) => ProjectDto(
         id: (j['id'] as num).toInt(),
         owner: UserSummaryDto.fromJson(j['owner'] as Map<String, dynamic>),
@@ -191,14 +183,9 @@ class ProjectDto {
         tasks: (j['tasks'] as List<dynamic>? ?? [])
             .map((t) => ProjectTaskDto.fromJson(t as Map<String, dynamic>))
             .toList(),
-        skills: (j['skills'] as List<dynamic>? ?? [])
-            .map((s) => SkillTagDto.fromJson(s as Map<String, dynamic>))
-            .toList(),
       );
-  List<String> get allSkillNames => {
-        ...skills.map((s) => s.name),
-        ...tasks.expand((t) => t.requiredSkills.map((s) => s.name)),
-      }.toList();
+  List<String> get allSkillNames =>
+      tasks.expand((t) => t.requiredSkills.map((s) => s.name)).toSet().toList();
 }
 
 class ApplicationDto {
