@@ -7,7 +7,8 @@ import '../theme.dart';
 import '../widgets/dm_widgets.dart';
 
 class MyApplicationsScreen extends StatefulWidget {
-  const MyApplicationsScreen({super.key});
+  final int initialTab;
+  const MyApplicationsScreen({super.key, this.initialTab = 0});
   @override
   State<MyApplicationsScreen> createState() => _MyApplicationsScreenState();
 }
@@ -19,7 +20,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 2, vsync: this);
+    _tabs = TabController(length: 2, vsync: this, initialIndex: widget.initialTab);
   }
 
   @override
@@ -435,6 +436,10 @@ class _InlineAppRowState extends State<_InlineAppRow> {
             Text(statusLabel,
               style: kBody(12, color: statusColor, weight: FontWeight.w600)),
           ]),
+          if (widget.app.isAccepted && _user != null) ...[
+            const SizedBox(height: 2),
+            Text(_user!.email, style: kBody(12, color: kInk3)),
+          ],
         ])),
         if (widget.app.isPending) ...[
           DmActionBtn(
