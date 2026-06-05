@@ -1,6 +1,7 @@
 package com.elsys.server.controller;
 
 import com.elsys.server.dto.request.ProjectRequest;
+import com.elsys.server.dto.response.PageResponse;
 import com.elsys.server.dto.response.ProjectDto;
 import com.elsys.server.entity.User;
 import com.elsys.server.service.ProjectService;
@@ -48,11 +49,14 @@ public class ProjectController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProjectDto>> getAllProjects(@RequestParam(required = false) Long ownerId) {
+    public ResponseEntity<?> getAllProjects(
+            @RequestParam(required = false) Long ownerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         if (ownerId != null) {
             return ResponseEntity.ok(projectService.getProjectsByOwner(ownerId));
         }
-        return ResponseEntity.ok(projectService.getAllProjects());
+        return ResponseEntity.ok(projectService.getAllProjects(page, size));
     }
 
 }

@@ -75,6 +75,9 @@ class ApiClient {
   static Future<http.Response> createSkill(String name) =>
       post('/api/skills', {'name': name});
 
+  static Future<http.Response> getProjects({int page = 0, int size = 10}) =>
+      get('/api/projects?page=$page&size=$size');
+
   static Future<http.Response> getAllSkills() =>
       get('/api/skills');
 

@@ -19,9 +19,15 @@ public interface ProjectTaskRepository extends JpaRepository<ProjectTask, Long> 
             @Param("skills") Set<SkillTag> skills,
             @Param("user") User user);
 
-    @Query("SELECT DISTINCT t FROM ProjectTask t LEFT JOIN FETCH t.requiredSkills WHERE t.id IN :ids")
+    @Query("SELECT DISTINCT t FROM ProjectTask t " +
+           "JOIN FETCH t.project p JOIN FETCH p.owner " +
+           "LEFT JOIN FETCH t.requiredSkills " +
+           "WHERE t.id IN :ids")
     List<ProjectTask> findByIdsWithSkills(@Param("ids") List<Long> ids);
 
-    @Query("SELECT DISTINCT t FROM ProjectTask t LEFT JOIN FETCH t.requiredSkills WHERE t.project.owner <> :user")
+    @Query("SELECT DISTINCT t FROM ProjectTask t " +
+           "JOIN FETCH t.project p JOIN FETCH p.owner " +
+           "LEFT JOIN FETCH t.requiredSkills " +
+           "WHERE p.owner <> :user")
     List<ProjectTask> findAllExcludingOwner(@Param("user") User user);
 }

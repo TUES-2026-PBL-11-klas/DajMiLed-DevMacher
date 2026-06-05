@@ -127,12 +127,14 @@ class ProjectServiceTest extends BaseUnitTest {
     void getAllProjects_returnsList() {
         User user = createUser(1L);
         Project project = createProject(1L, user);
-        
-        given(projectRepository.findAll()).willReturn(List.of(project));
 
-        List<ProjectDto> result = projectService.getAllProjects();
+        given(projectRepository.findPagedIds(any())).willReturn(List.of(1L));
+        given(projectRepository.count()).willReturn(1L);
+        given(projectRepository.findByIdsWithDetails(List.of(1L))).willReturn(List.of(project));
 
-        assertThat(result).hasSize(1);
-        assertThat(result.getFirst().title()).isEqualTo("Project Title");
+        var result = projectService.getAllProjects(0, 10);
+
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().getFirst().title()).isEqualTo("Project Title");
     }
 }
