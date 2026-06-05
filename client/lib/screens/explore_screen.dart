@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
-import '../widgets/company_card.dart';
+import 'package:go_router/go_router.dart';
+import '../api.dart';
+import '../theme.dart';
+import '../widgets/dm_widgets.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -9,80 +12,124 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
+  List<ProjectDto> _projects = [];
+  bool _loading = true;
   String _query = '';
 
-  List<Company> get _results {
-    if (_query.isEmpty) return companies;
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    final res = await ApiClient.get('/api/projects');
+    if (!mounted) return;
+    if (res.statusCode == 401) { if (mounted) context.go('/login'); return; }
+    if (res.statusCode == 200) {
+      final list = jsonDecode(res.body) as List<dynamic>;
+      setState(() {
+        _projects = list.map((p) => ProjectDto.fromJson(p as Map<String, dynamic>)).toList();
+        _loading = false;
+      });
+    } else {
+      setState(() => _loading = false);
+    }
+  }
+
+  List<ProjectDto> get _results {
+    if (_query.isEmpty) return _projects;
     final q = _query.toLowerCase();
-    return companies.where((c) =>
-        c.name.toLowerCase().contains(q) ||
-        c.role.toLowerCase().contains(q) ||
-        c.industry.toLowerCase().contains(q)).toList();
+    return _projects.where((p) =>
+        p.title.toLowerCase().contains(q) ||
+        (p.description ?? '').toLowerCase().contains(q) ||
+        p.owner.displayName.toLowerCase().contains(q) ||
+        p.allSkillNames.any((s) => s.toLowerCase().contains(q))).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
     return Column(children: [
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-        child: ShadInput(
-          placeholder: const Text('Search companies or roles…'),
-          leading: Icon(LucideIcons.search, size: 16, color: theme.colorScheme.mutedForeground),
+        child: TextField(
           onChanged: (v) => setState(() => _query = v),
+          style: kBody(15, color: kInk),
+          decoration: InputDecoration(
+            hintText: 'Search projects or skills…',
+            hintStyle: kBody(15, color: kInk3),
+            prefixIcon: const Icon(Icons.search, color: kInk3, size: 20),
+            filled: true,
+            fillColor: kSurface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: kLine, width: 1.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: kLine, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: kAccent, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
         ),
       ),
       Expanded(
-        child: _results.isEmpty
-            ? Center(child: Text('No results', style: theme.textTheme.muted))
-            : ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                itemCount: _results.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (_, i) => _Tile(company: _results[i]),
-              ),
+        child: _loading
+            ? const Center(child: CircularProgressIndicator(color: kAccent))
+            : _results.isEmpty
+                ? Center(child: Text(
+                    _projects.isEmpty ? 'No projects yet' : 'No results',
+                    style: kBody(15, color: kInk3)))
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    itemCount: _results.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (_, i) => _ProjectTile(project: _results[i]),
+                  ),
       ),
     ]);
   }
 }
 
-class _Tile extends StatelessWidget {
-  const _Tile({required this.company});
-  final Company company;
+class _ProjectTile extends StatelessWidget {
+  const _ProjectTile({required this.project});
+  final ProjectDto project;
 
   @override
   Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
+    final skills = project.allSkillNames.take(3).toList();
+    final initial = project.title.isNotEmpty ? project.title[0].toUpperCase() : '?';
+    final avatar = AvatarData(kAccentSoft, kAccentInk, initial);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.border),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: kLine, width: 1),
       ),
       child: Row(children: [
-        Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: company.color),
-          child: Center(child: Text(company.name[0],
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700))),
-        ),
+        DmAvatar(data: avatar, size: 46),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Text(company.name,
-                style: theme.textTheme.p.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(width: 8),
-            ShadBadge.secondary(child: Text(company.industry)),
-          ]),
+          Text(project.title,
+            style: kBody(15.5, color: kInk, weight: FontWeight.w600),
+            maxLines: 1, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 3),
-          Text('${company.role} · ${company.location}',
-              style: theme.textTheme.muted, overflow: TextOverflow.ellipsis),
+          Text('by ${project.owner.displayName} · ${project.tasks.length} task${project.tasks.length == 1 ? '' : 's'}',
+            style: kBody(13, color: kInk3)),
+          if (skills.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(spacing: 6, children: skills.map((s) => DmTag(s, small: true)).toList()),
+          ],
         ])),
         const SizedBox(width: 8),
-        Icon(LucideIcons.chevronRight, size: 16,
-            color: theme.colorScheme.mutedForeground),
+        const Icon(Icons.chevron_right, color: kInk3, size: 20),
       ]),
     );
   }

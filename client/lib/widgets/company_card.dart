@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
+import '../theme.dart';
+import 'dm_widgets.dart';
 
 class Company {
   const Company({required this.name, required this.industry, required this.role,
@@ -39,15 +40,13 @@ class CompanyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.card,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 24, offset: Offset(0, 6))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Header
         Container(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
           decoration: BoxDecoration(
@@ -76,22 +75,22 @@ class CompanyCard extends StatelessWidget {
             ),
           ]),
         ),
-        // Body
         Expanded(child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(company.role, style: theme.textTheme.h4),
+            Text(company.role, style: kBody(17, color: kInk, weight: FontWeight.w700)),
             const SizedBox(height: 5),
             Row(children: [
-              Icon(LucideIcons.mapPin, size: 13, color: company.color),
+              Icon(Icons.location_on_outlined, size: 13, color: company.color),
               const SizedBox(width: 4),
-              Text(company.location, style: theme.textTheme.muted),
+              Text(company.location, style: kBody(13, color: kInk3)),
             ]),
             const SizedBox(height: 14),
-            Text(company.description, overflow: TextOverflow.ellipsis, maxLines: 4),
+            Text(company.description, style: kBody(14, color: kInk2),
+              overflow: TextOverflow.ellipsis, maxLines: 4),
             const Spacer(),
             Wrap(spacing: 6, runSpacing: 6,
-                children: company.skills.map((s) => ShadBadge.outline(child: Text(s))).toList()),
+              children: company.skills.map((s) => DmTag(s, tone: DmTagTone.outline)).toList()),
           ]),
         )),
       ]),
