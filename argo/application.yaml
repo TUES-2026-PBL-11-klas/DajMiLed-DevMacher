@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/TUES-2026-PBL-11-klas/DajMiLed-DevMacher.git
-    targetRevision: main
+    targetRevision: helm-updates
     path: helm
   destination:
     server: https://kubernetes.default.svc
