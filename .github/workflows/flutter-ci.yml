@@ -1,0 +1,63 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  ci:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: client
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: client
+        run: flutter analyze --fatal-infos
+
+      - name: Test
+        working-directory: client
+        run: flutter test --coverage
+
+  build-apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: client
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: client
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devmatch-${{ github.sha }}
+          path: client/build/outputs/flutter-apk/app-release.apk
+          retention-days: 14
