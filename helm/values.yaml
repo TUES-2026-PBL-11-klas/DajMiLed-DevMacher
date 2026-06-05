@@ -1,0 +1,32 @@
+image:
+  repository: ghcr.io/tues-2026-pbl-11-klas/dajmiled-devmacher/server
+  tag: "latest"
+  pullPolicy: Always
+
+replicaCount: 1
+
+# Name of the Kubernetes Secret created manually on the cluster.
+# Create it once with:
+#   kubectl create secret generic devmatch-secrets -n devmatch \
+#     --from-literal=DB_URL=... \
+#     --from-literal=DB_USERNAME=... \
+#     --from-literal=DB_PASSWORD=... \
+#     --from-literal=JWT_SECRET=...
+secretName: devmatch-secrets
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  host: devmatch.example.com
+  tls: false
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
