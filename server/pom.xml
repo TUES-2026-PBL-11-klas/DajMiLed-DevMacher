@@ -31,7 +31,7 @@
 		<jjwt.version>0.12.6</jjwt.version>
 		<lombok.version>1.18.38</lombok.version>
 		<bucket4j.version>8.10.1</bucket4j.version>
-		<spotbugs-maven-plugin.version>4.8.6.6</spotbugs-maven-plugin.version>
+		<spotbugs-maven-plugin.version>4.9.3.0</spotbugs-maven-plugin.version>
 	</properties>
 	<dependencies>
 

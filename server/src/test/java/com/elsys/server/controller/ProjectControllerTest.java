@@ -46,10 +46,10 @@ class ProjectControllerTest extends BaseControllerTest {
     }
 
     @Test
-    void getAllProjects_returnsList() throws Exception {
+    void getAllProjects_returnsPageResponse() throws Exception {
         mockMvc.perform(get("/api/projects"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test

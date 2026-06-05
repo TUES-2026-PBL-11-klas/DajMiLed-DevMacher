@@ -27,21 +27,21 @@ class SkillTagServiceTest extends BaseUnitTest {
     @Test
     void createSkill_newName_savesAndReturnsDto() {
         SkillTagRequest req = new SkillTagRequest("Java");
-        SkillTag tag = SkillTag.builder().id(1L).name("java").build();
+        SkillTag tag = SkillTag.builder().id(1L).name("Java").build();
 
-        given(skillTagRepository.existsByName("java")).willReturn(false);
+        given(skillTagRepository.existsByName("Java")).willReturn(false);
         given(skillTagRepository.save(any(SkillTag.class))).willReturn(tag);
 
         SkillTagDto result = skillTagService.createSkill(req);
 
-        assertThat(result.name()).isEqualTo("java");
+        assertThat(result.name()).isEqualTo("Java");
     }
 
     @Test
     void createSkill_existingName_throwsException() {
         SkillTagRequest req = new SkillTagRequest("Java");
 
-        given(skillTagRepository.existsByName("java")).willReturn(true);
+        given(skillTagRepository.existsByName("Java")).willReturn(true);
 
         assertThatThrownBy(() -> skillTagService.createSkill(req))
                 .isInstanceOf(DuplicateResourceException.class);

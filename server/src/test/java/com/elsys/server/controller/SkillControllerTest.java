@@ -40,7 +40,7 @@ class SkillControllerTest extends BaseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(req)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("java"));
+                .andExpect(jsonPath("$.name").value("Java"));
     }
 
     @Test
@@ -61,6 +61,6 @@ class SkillControllerTest extends BaseControllerTest {
 
         mockMvc.perform(get("/api/skills/search").param("q", "py"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("python"));
+                .andExpect(jsonPath("$[0].name").value("Python"));
     }
 }
