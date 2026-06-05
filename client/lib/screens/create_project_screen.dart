@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -16,8 +15,27 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final List<_TaskDraft> _tasks = [];
+  List<SkillTagDto> _allSkills = [];
   bool _submitting = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSkills();
+  }
+
+  Future<void> _loadSkills() async {
+    final res = await ApiClient.getAllSkills();
+    if (!mounted) return;
+    if (res.statusCode == 200) {
+      setState(() {
+        _allSkills = (jsonDecode(res.body) as List<dynamic>)
+            .map((s) => SkillTagDto.fromJson(s as Map<String, dynamic>))
+            .toList();
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -42,7 +60,6 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     }
     setState(() { _submitting = true; _error = null; });
 
-    // 1. Create project
     final projectRes = await ApiClient.createProject(title, _descCtrl.text.trim());
     if (!mounted) return;
     if (projectRes.statusCode != 201) {
@@ -55,7 +72,6 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     final project = ProjectDto.fromJson(
         jsonDecode(projectRes.body) as Map<String, dynamic>);
 
-    // 2. Create each task
     for (final draft in _tasks) {
       final taskTitle = draft.titleCtrl.text.trim();
       if (taskTitle.isEmpty) continue;
@@ -68,7 +84,6 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       final task = ProjectTaskDto.fromJson(
           jsonDecode(taskRes.body) as Map<String, dynamic>);
 
-      // 3. Add skills to task
       for (final skill in draft.skills) {
         await ApiClient.addSkillToTask(project.id, task.id, skill.id);
         if (!mounted) return;
@@ -89,7 +104,6 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
         children: [
-          // Project details
           _SectionHeader('Project Details'),
           const SizedBox(height: 12),
           _Field(label: 'Title', controller: _titleCtrl, hint: 'e.g. DevMatch Mobile App'),
@@ -101,14 +115,13 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           _SectionHeader('Tasks'),
           const SizedBox(height: 12),
 
-          // Task cards
           ...List.generate(_tasks.length, (i) => _TaskCard(
             draft: _tasks[i],
             index: i,
+            allSkills: _allSkills,
             onRemove: () => _removeTask(i),
           )),
 
-          // Add task button
           GestureDetector(
             onTap: _addTask,
             child: Container(
@@ -116,12 +129,13 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
               decoration: BoxDecoration(
                 color: kSurface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: kLine, style: BorderStyle.solid),
+                border: Border.all(color: kLine),
               ),
               child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 const Icon(Icons.add, color: kAccent, size: 20),
                 const SizedBox(width: 6),
-                Text('Add task', style: kBody(15, color: kAccentInk, weight: FontWeight.w600)),
+                Text('Add task',
+                    style: kBody(15, color: kAccentInk, weight: FontWeight.w600)),
               ]),
             ),
           ),
@@ -152,67 +166,27 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
 class _TaskCard extends StatefulWidget {
   final _TaskDraft draft;
   final int index;
+  final List<SkillTagDto> allSkills;
   final VoidCallback onRemove;
-  const _TaskCard({required this.draft, required this.index, required this.onRemove});
+  const _TaskCard({
+    required this.draft,
+    required this.index,
+    required this.allSkills,
+    required this.onRemove,
+  });
   @override
   State<_TaskCard> createState() => _TaskCardState();
 }
 
 class _TaskCardState extends State<_TaskCard> {
-  final _searchCtrl = TextEditingController();
-  List<SkillTagDto> _suggestions = [];
-  String _query = '';
-  bool _creating = false;
-  Timer? _debounce;
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    _debounce?.cancel();
-    super.dispose();
-  }
-
-  void _onSearchChanged(String q) {
-    _debounce?.cancel();
-    setState(() { _query = q.trim(); _suggestions = []; });
-    if (q.trim().isEmpty) return;
-    _debounce = Timer(const Duration(milliseconds: 350), () async {
-      final res = await ApiClient.searchSkills(q.trim());
-      if (!mounted) return;
-      if (res.statusCode == 200) {
-        final list = (jsonDecode(res.body) as List<dynamic>)
-            .map((s) => SkillTagDto.fromJson(s as Map<String, dynamic>))
-            .toList();
-        setState(() => _suggestions = list
-            .where((s) => !widget.draft.skills.any((a) => a.id == s.id))
-            .toList());
+  void _toggleSkill(SkillTagDto skill) {
+    setState(() {
+      if (widget.draft.skills.any((s) => s.id == skill.id)) {
+        widget.draft.skills.removeWhere((s) => s.id == skill.id);
+      } else {
+        widget.draft.skills.add(skill);
       }
     });
-  }
-
-  void _addSkill(SkillTagDto skill) {
-    setState(() {
-      widget.draft.skills.add(skill);
-      _suggestions = [];
-      _query = '';
-      _searchCtrl.clear();
-    });
-  }
-
-  Future<void> _createAndAddSkill(String name) async {
-    setState(() => _creating = true);
-    final res = await ApiClient.createSkill(name);
-    if (!mounted) return;
-    if (res.statusCode == 201) {
-      final skill = SkillTagDto.fromJson(
-          jsonDecode(res.body) as Map<String, dynamic>);
-      _addSkill(skill);
-    }
-    setState(() => _creating = false);
-  }
-
-  void _removeSkill(SkillTagDto skill) {
-    setState(() => widget.draft.skills.removeWhere((s) => s.id == skill.id));
   }
 
   @override
@@ -240,90 +214,24 @@ class _TaskCardState extends State<_TaskCard> {
         const SizedBox(height: 10),
         _Field(label: 'Description', controller: widget.draft.descCtrl,
             hint: 'What does this task involve?', maxLines: 2),
-        const SizedBox(height: 12),
 
-        // Selected skills
-        if (widget.draft.skills.isNotEmpty) ...[
-          Wrap(spacing: 6, runSpacing: 6,
-            children: widget.draft.skills.map((s) => GestureDetector(
-              onTap: () => _removeSkill(s),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                DmTag(s.name, tone: DmTagTone.accent, small: true),
-                const SizedBox(width: 3),
-                Icon(Icons.close, size: 12, color: kAccentInk),
-              ]),
-            )).toList()),
-          const SizedBox(height: 10),
+        if (widget.allSkills.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Text('REQUIRED SKILLS', style: kLabel()),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8, runSpacing: 8,
+            children: widget.allSkills.map((skill) {
+              final selected = widget.draft.skills.any((s) => s.id == skill.id);
+              return GestureDetector(
+                onTap: () => _toggleSkill(skill),
+                child: DmTag(skill.name,
+                    tone: selected ? DmTagTone.accent : DmTagTone.outline,
+                    small: true),
+              );
+            }).toList(),
+          ),
         ],
-
-        // Skill search
-        TextField(
-          controller: _searchCtrl,
-          onChanged: _onSearchChanged,
-          style: kBody(14, color: kInk),
-          decoration: InputDecoration(
-            hintText: 'Search skills…',
-            hintStyle: kBody(14, color: kInk3),
-            prefixIcon: const Icon(Icons.search, color: kInk3, size: 18),
-            filled: true, fillColor: kSurface,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: kLine)),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: kLine)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: kAccent, width: 2)),
-          ),
-        ),
-
-        // Suggestions dropdown
-        if (_query.isNotEmpty && (_suggestions.isNotEmpty || !_creating))
-          Container(
-            margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: kLine),
-              boxShadow: [BoxShadow(color: Colors.black.withAlpha(15),
-                  blurRadius: 12, offset: const Offset(0, 4))],
-            ),
-            child: Column(children: [
-              // existing matches
-              ..._suggestions.take(5).map((s) => InkWell(
-                onTap: () => _addSkill(s),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  child: Row(children: [
-                    Expanded(child: Text(s.name,
-                        style: kBody(14, color: kInk, weight: FontWeight.w500))),
-                    const Icon(Icons.add, size: 16, color: kAccent),
-                  ]),
-                ),
-              )),
-              // create option when no exact match exists
-              if (_suggestions.every((s) =>
-                  s.name.toLowerCase() != _query.toLowerCase()))
-                InkWell(
-                  onTap: _creating ? null : () => _createAndAddSkill(_query),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    child: Row(children: [
-                      const Icon(Icons.add_circle_outline, size: 16, color: kAccent),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(
-                        _creating ? 'Creating…' : 'Create "$_query"',
-                        style: kBody(14, color: kAccentInk, weight: FontWeight.w600),
-                      )),
-                    ]),
-                  ),
-                ),
-            ]),
-          ),
       ]),
     );
   }
