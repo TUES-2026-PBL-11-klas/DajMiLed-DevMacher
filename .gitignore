@@ -89,6 +89,13 @@ nbdist/
 db/
 CLAUDE.md
 
+# Mobile signing keys (never commit these)
+*.keystore
+*.jks
+key.properties
+google-services.json
+GoogleService-Info.plist
+
 # Temporary files
 tmp/
 temp/
