@@ -201,7 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               full: true,
               variant: DmBtnVariant.outline,
               icon: Icons.send_outlined,
-              onPressed: () => context.push('/applications'),
+              onPressed: () => context.push('/applications', extra: 0),
             ),
             const SizedBox(height: 10),
             DmBtn(

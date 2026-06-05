@@ -33,7 +33,12 @@ final _router = GoRouter(
         projectId: int.parse(state.pathParameters['id']!),
       ),
     ),
-    GoRoute(path: '/applications', builder: (_, __) => const MyApplicationsScreen()),
+    GoRoute(
+      path: '/applications',
+      builder: (_, state) => MyApplicationsScreen(
+        initialTab: (state.extra as int?) ?? 0,
+      ),
+    ),
   ],
 );
 
@@ -79,9 +84,9 @@ class MatchScreen extends StatefulWidget {
 class _MatchScreenState extends State<MatchScreen> {
   int _tab = 0;
 
-  static const _titles = ['DevMatch', 'Explore', 'Profile'];
-  static const _icons = [Icons.explore_outlined, Icons.search, Icons.person_outline];
-  static const _activeIcons = [Icons.explore, Icons.search, Icons.person];
+  static const _titles = ['DevMatch', 'Explore', 'Projects', 'Profile'];
+  static const _icons = [Icons.explore_outlined, Icons.search, Icons.folder_outlined, Icons.person_outline];
+  static const _activeIcons = [Icons.explore, Icons.search, Icons.folder, Icons.person];
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +107,8 @@ class _MatchScreenState extends State<MatchScreen> {
             ),
           ),
         1 => const ExploreScreen(),
-        2 => const ProfileScreen(),
+        2 => const MyApplicationsScreen(initialTab: 1),
+        3 => const ProfileScreen(),
         _ => const ProfileScreen(),
       },
       bottomNavigationBar: Container(
@@ -114,7 +120,7 @@ class _MatchScreenState extends State<MatchScreen> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(children: List.generate(3, (i) {
+            child: Row(children: List.generate(_titles.length, (i) {
               final on = _tab == i;
               return Expanded(
                 child: GestureDetector(
