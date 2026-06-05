@@ -6,6 +6,8 @@ metadata:
     app: devmatch-server
 spec:
   replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: devmatch-server
