@@ -36,6 +36,8 @@ spec:
           {{`{{- with secret "secret/data/devmatch" }}{{ .Data.data.JWT_EXPIRATION_MS }}{{- end }}`}}
     spec:
       serviceAccountName: devmatch-server
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
       containers:
         - name: server
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

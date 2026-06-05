@@ -13,6 +13,7 @@ replicaCount: 1
 #     --from-literal=DB_PASSWORD=... \
 #     --from-literal=JWT_SECRET=...
 secretName: devmatch-secrets
+imagePullSecret: ghcr-pull-secret
 
 service:
   type: ClusterIP
