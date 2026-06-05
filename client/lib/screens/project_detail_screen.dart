@@ -374,13 +374,25 @@ class _ApplicationRowState extends State<_ApplicationRow> {
       decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: kLine))),
       child: Row(children: [
-        DmAvatar(data: avatar, size: 38),
+        GestureDetector(
+          onTap: _user != null
+              ? () => context.push('/users/${_user!.id}')
+              : null,
+          child: DmAvatar(data: avatar, size: 38),
+        ),
         const SizedBox(width: 10),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(name, style: kBody(14.5, color: kInk, weight: FontWeight.w600)),
-          const SizedBox(height: 2),
-          _StatusBadge(widget.app.status),
-        ])),
+        Expanded(
+          child: GestureDetector(
+            onTap: _user != null
+                ? () => context.push('/users/${_user!.id}')
+                : null,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(name, style: kBody(14.5, color: kInk, weight: FontWeight.w600)),
+              const SizedBox(height: 2),
+              _StatusBadge(widget.app.status),
+            ]),
+          ),
+        ),
         if (widget.app.isPending) ...[
           DmActionBtn(
             icon: Icons.check,

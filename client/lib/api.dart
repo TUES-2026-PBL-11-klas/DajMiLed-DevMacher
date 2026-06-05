@@ -89,6 +89,21 @@ class ApiClient {
 
   static Future<http.Response> getRelevantTasks() =>
       get('/api/users/me/relevant-tasks');
+
+  static Future<http.Response> updateProfile({
+    String? username,
+    String? discordTag,
+    String? githubLink,
+    String? bio,
+    String? education,
+  }) =>
+      put('/api/users/me', {
+        'username': (username?.isNotEmpty == true) ? username : null,
+        'discordTag': (discordTag?.isNotEmpty == true) ? discordTag : null,
+        'githubLink': (githubLink?.isNotEmpty == true) ? githubLink : null,
+        'bio': (bio?.isNotEmpty == true) ? bio : null,
+        'education': (education?.isNotEmpty == true) ? education : null,
+      });
 }
 
 class SkillTagDto {

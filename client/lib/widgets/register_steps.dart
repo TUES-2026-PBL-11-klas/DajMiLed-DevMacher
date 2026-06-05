@@ -15,16 +15,24 @@ const _textConfigs = [
   ('And your\nlast name?', '', 'Lovelace', false),
   ('Your email?', "You'll use this to sign in.", 'you@example.com', false),
   ('Create a\npassword', 'At least 8 characters.', '••••••••', true),
+  // optional profile steps
+  ('Your Discord\ntag?', 'So project owners can reach you.', 'username#1234', false),
+  ('GitHub\nprofile link?', 'Show off your work.', 'github.com/you', false),
+  ('Write a\nshort bio', "Tell others what you're about.", 'I build things…', false),
+  ('Your\neducation?', 'Optional background info.', 'CS @ University', false),
 ];
 
 class RegisterTextStep extends StatelessWidget {
   const RegisterTextStep({super.key, required this.step, required this.controller,
-    required this.fieldError, required this.onNext, this.loading = false});
+    required this.fieldError, required this.onNext, this.loading = false,
+    this.onSkip, this.buttonLabel});
   final int step;
   final TextEditingController controller;
   final String? fieldError;
   final VoidCallback onNext;
   final bool loading;
+  final VoidCallback? onSkip;
+  final String? buttonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -75,11 +83,20 @@ class RegisterTextStep extends StatelessWidget {
         ],
         const Spacer(),
         DmBtn(
-          label: loading ? 'Creating account…' : 'Continue',
+          label: loading ? 'Creating account…' : (buttonLabel ?? 'Continue'),
           full: true,
           disabled: loading,
           onPressed: onNext,
         ),
+        if (onSkip != null) ...[
+          const SizedBox(height: 10),
+          DmBtn(
+            label: 'Skip',
+            full: true,
+            variant: DmBtnVariant.ghost,
+            onPressed: onSkip,
+          ),
+        ],
       ]),
     );
   }

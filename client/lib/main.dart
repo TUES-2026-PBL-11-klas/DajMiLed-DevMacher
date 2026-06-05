@@ -10,6 +10,7 @@ import 'screens/profile_screen.dart';
 import 'screens/project_detail_screen.dart';
 import 'screens/my_applications_screen.dart';
 import 'screens/create_project_screen.dart';
+import 'screens/applicant_profile_screen.dart';
 import 'widgets/company_swipe.dart';
 import 'widgets/dm_widgets.dart';
 
@@ -37,6 +38,12 @@ final _router = GoRouter(
       path: '/applications',
       builder: (_, state) => MyApplicationsScreen(
         initialTab: (state.extra as int?) ?? 0,
+      ),
+    ),
+    GoRoute(
+      path: '/users/:id',
+      builder: (_, state) => ApplicantProfileScreen(
+        userId: int.parse(state.pathParameters['id']!),
       ),
     ),
   ],

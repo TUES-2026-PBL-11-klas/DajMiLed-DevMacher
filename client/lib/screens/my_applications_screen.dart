@@ -425,22 +425,34 @@ class _InlineAppRowState extends State<_InlineAppRow> {
       decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: kLine))),
       child: Row(children: [
-        DmAvatar(data: avatar, size: 36),
+        GestureDetector(
+          onTap: _user != null
+              ? () => context.push('/users/${_user!.id}')
+              : null,
+          child: DmAvatar(data: avatar, size: 36),
+        ),
         const SizedBox(width: 10),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(name, style: kBody(14, color: kInk, weight: FontWeight.w600)),
-          Row(children: [
-            Container(width: 6, height: 6,
-              decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
-            const SizedBox(width: 4),
-            Text(statusLabel,
-              style: kBody(12, color: statusColor, weight: FontWeight.w600)),
-          ]),
-          if (widget.app.isAccepted && _user != null) ...[
-            const SizedBox(height: 2),
-            Text(_user!.email, style: kBody(12, color: kInk3)),
-          ],
-        ])),
+        Expanded(
+          child: GestureDetector(
+            onTap: _user != null
+                ? () => context.push('/users/${_user!.id}')
+                : null,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(name, style: kBody(14, color: kInk, weight: FontWeight.w600)),
+              Row(children: [
+                Container(width: 6, height: 6,
+                  decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
+                const SizedBox(width: 4),
+                Text(statusLabel,
+                  style: kBody(12, color: statusColor, weight: FontWeight.w600)),
+              ]),
+              if (widget.app.isAccepted && _user != null) ...[
+                const SizedBox(height: 2),
+                Text(_user!.email, style: kBody(12, color: kInk3)),
+              ],
+            ]),
+          ),
+        ),
         if (widget.app.isPending) ...[
           DmActionBtn(
             icon: Icons.check, iconColor: Colors.white,
