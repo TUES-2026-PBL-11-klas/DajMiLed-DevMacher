@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Run this once on the k3s server to install the full observability stack.
+# Requires GRAFANA_ADMIN_PASSWORD env var (read from server/.env by setup.sh).
 set -euo pipefail
 
 NAMESPACE=monitoring
+GRAFANA_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD must be set (add it to server/.env)}"
 
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo add grafana https://grafana.github.io/helm-charts
@@ -14,6 +16,7 @@ echo "Installing Prometheus + Grafana..."
 helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
   --namespace $NAMESPACE \
   --values "$(dirname "$0")/prometheus-values.yaml" \
+  --set "grafana.adminPassword=$GRAFANA_ADMIN_PASSWORD" \
   --wait
 
 echo "Installing Loki..."

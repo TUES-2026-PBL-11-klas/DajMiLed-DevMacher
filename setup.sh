@@ -44,7 +44,7 @@ success "Namespaces ready"
 info "Loading secrets from server/.env..."
 [ -f "$ROOT/server/.env" ] || die "server/.env not found — ask the team lead for this file (never committed to git)"
 
-source "$ROOT/server/.env"
+set -a; source "$ROOT/server/.env"; set +a
 kubectl create secret generic devmatch-secrets -n devmatch \
   --from-literal=DB_URL="$DB_URL" \
   --from-literal=DB_USERNAME="$DB_USERNAME" \
@@ -57,11 +57,12 @@ success "Kubernetes secret applied"
 # ── 6. Vault ─────────────────────────────────────────────────────────────────
 info "Installing Vault..."
 helm repo add hashicorp https://helm.releases.hashicorp.com --force-update &>/dev/null
+VAULT_ROOT_TOKEN="${VAULT_ROOT_TOKEN:-root}"
 helm upgrade --install vault hashicorp/vault \
   --namespace vault \
   --set "ui.enabled=true" \
   --set "server.dev.enabled=true" \
-  --set "server.dev.devRootToken=root" \
+  --set "server.dev.devRootToken=$VAULT_ROOT_TOKEN" \
   --wait --timeout=120s &>/dev/null
 success "Vault installed"
 
@@ -77,8 +78,7 @@ kubectl exec -n vault vault-0 -- vault write auth/kubernetes/role/devmatch \
   bound_service_account_namespaces=devmatch \
   policies=devmatch-policy ttl=1h &>/dev/null
 
-# Store secrets in Vault
-source "$ROOT/server/.env"
+# Store secrets in Vault (env already loaded above)
 kubectl exec -n vault vault-0 -- vault kv put secret/devmatch \
   DB_URL="$DB_URL" DB_USERNAME="$DB_USERNAME" DB_PASSWORD="$DB_PASSWORD" \
   JWT_SECRET="$JWT_SECRET" JWT_EXPIRATION_MS="${JWT_EXPIRATION_MS:-86400000}" &>/dev/null
@@ -142,8 +142,8 @@ echo -e "${GREEN}============================================${NC}"
 echo -e "${GREEN}   DevMatch local environment is ready!    ${NC}"
 echo -e "${GREEN}============================================${NC}"
 echo ""
-echo -e "  ${CYAN}Grafana${NC}  → http://localhost:3000       admin / change-me"
-echo -e "  ${CYAN}Vault${NC}    → http://localhost:8200       token: root"
+echo -e "  ${CYAN}Grafana${NC}  → http://localhost:3000       admin / ${GRAFANA_ADMIN_PASSWORD}"
+echo -e "  ${CYAN}Vault${NC}    → http://localhost:8200       token: ${VAULT_ROOT_TOKEN}"
 echo -e "  ${CYAN}Argo CD${NC}  → http://localhost:8081       admin / ${ARGOCD_PASS}"
 echo -e "  ${CYAN}Backend${NC}  → http://localhost:9090/actuator/health"
 echo ""

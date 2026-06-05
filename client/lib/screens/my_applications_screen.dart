@@ -84,7 +84,7 @@ class _AppliedTabState extends State<_AppliedTab>
     setState(() => _loading = true);
     final results = await Future.wait([
       ApiClient.getMyApplications(),
-      ApiClient.get('/api/projects'),
+      ApiClient.get('/api/projects?page=0&size=200'),
     ]);
     if (!mounted) return;
 
@@ -101,7 +101,8 @@ class _AppliedTabState extends State<_AppliedTab>
     final Map<int, ProjectTaskDto> taskById = {};
     final Map<int, ProjectDto> projectByTaskId = {};
     if (projectsRes.statusCode == 200) {
-      for (final p in (jsonDecode(projectsRes.body) as List<dynamic>)
+      final body = jsonDecode(projectsRes.body) as Map<String, dynamic>;
+      for (final p in (body['content'] as List<dynamic>)
           .map((p) => ProjectDto.fromJson(p as Map<String, dynamic>))) {
         for (final t in p.tasks) {
           taskById[t.id] = t;
@@ -202,17 +203,13 @@ class _MyProjectsTabState extends State<_MyProjectsTab>
       }
     }
 
-    final res = await ApiClient.get('/api/projects');
+    final res = await ApiClient.get('/api/projects?ownerId=${auth.currentUserId}');
     if (!mounted) return;
     if (res.statusCode != 200) { setState(() => _loading = false); return; }
 
-    final all = (jsonDecode(res.body) as List<dynamic>)
-        .map((p) => ProjectDto.fromJson(p as Map<String, dynamic>))
-        .toList();
-
     setState(() {
-      _projects = all
-          .where((p) => p.owner.id == auth.currentUserId)
+      _projects = (jsonDecode(res.body) as List<dynamic>)
+          .map((p) => ProjectDto.fromJson(p as Map<String, dynamic>))
           .toList();
       _loading = false;
     });

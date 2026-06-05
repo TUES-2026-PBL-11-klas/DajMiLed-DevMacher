@@ -1,6 +1,5 @@
 grafana:
   enabled: true
-  adminPassword: "change-me"
   dashboardProviders:
     dashboardproviders.yaml:
       apiVersion: 1
