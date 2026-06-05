@@ -1,108 +1,102 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:flutter/services.dart';
 import 'auth.dart' as auth;
-import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
-import 'screens/explore_screen.dart';
-import 'screens/profile_screen.dart';
-import 'widgets/company_swipe.dart';
+import 'data.dart';
+import 'theme.dart';
+import 'screens/welcome_screen.dart';
+import 'screens/auth_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/app_shell.dart';
 
-final _router = GoRouter(
-  initialLocation: '/login',
-  redirect: (context, state) {
-    final isAuthRoute = state.matchedLocation == '/login' ||
-        state.matchedLocation == '/register';
-    if (!auth.loggedIn && !isAuthRoute) return '/login';
-    if (auth.loggedIn && isAuthRoute) return '/';
-    return null;
-  },
-  routes: [
-    GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-    GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
-    GoRoute(path: '/', builder: (_, __) => const MatchScreen()),
-  ],
-);
+enum _Screen { welcome, auth, onboarding, app }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+  ));
   await auth.init();
-  runApp(const DevMatchApp());
+  runApp(DevMatchApp(startLoggedIn: auth.loggedIn));
 }
 
-class DevMatchApp extends StatelessWidget {
-  const DevMatchApp({super.key});
+class DevMatchApp extends StatefulWidget {
+  final bool startLoggedIn;
+  const DevMatchApp({super.key, required this.startLoggedIn});
+
+  @override State<DevMatchApp> createState() => _DevMatchAppState();
+}
+
+class _DevMatchAppState extends State<DevMatchApp> {
+  late _Screen _screen;
+  bool _isSignup = true;
+  UserProfile _profile = UserProfile();
+
+  @override
+  void initState() {
+    super.initState();
+    _screen = widget.startLoggedIn ? _Screen.app : _Screen.welcome;
+  }
+
+  void _startAuth(bool signup) => setState(() { _isSignup = signup; _screen = _Screen.auth; });
+
+  void _finishAuth(String name, String email, String password) {
+    auth.loggedIn = true;
+    setState(() {
+      _profile = _profile.copyWith(name: name, email: email, password: password);
+      _screen = _isSignup ? _Screen.onboarding : _Screen.app;
+    });
+  }
+
+  void _finishOnboarding(String role, String headline, List<String> skills, List<String> goals, String avail) {
+    setState(() {
+      _profile = _profile.copyWith(
+        role: role.isNotEmpty ? role : 'Full-stack Developer',
+        headline: headline,
+        skills: skills.isNotEmpty ? skills : ['React', 'Node.js'],
+        goals: goals.isNotEmpty ? goals : ['mvp'],
+        avail: avail.isNotEmpty ? avail : 'some',
+      );
+      _screen = _Screen.app;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ShadApp.custom(
-      themeMode: ThemeMode.light,
-      theme: ShadThemeData(
-          brightness: Brightness.light,
-          colorScheme: const ShadZincColorScheme.light()),
-      darkTheme: ShadThemeData(
-          brightness: Brightness.dark,
-          colorScheme: const ShadZincColorScheme.dark()),
-      appBuilder: (context) => MaterialApp.router(
-        title: 'DevMatch',
-        debugShowCheckedModeBanner: false,
-        theme: Theme.of(context).copyWith(
-          appBarTheme: const AppBarTheme(
-              centerTitle: false, elevation: 0, scrolledUnderElevation: 0),
-        ),
-        localizationsDelegates: const [
-          GlobalShadLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        supportedLocales: const [Locale('en'), Locale('bg')],
-        builder: (context, child) => ShadAppBuilder(child: child!),
-        routerConfig: _router,
+    return MaterialApp(
+      title: 'DevMatch',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: kAccent, brightness: Brightness.light),
+        scaffoldBackgroundColor: kBg,
+        appBarTheme: const AppBarTheme(backgroundColor: kBg, elevation: 0, scrolledUnderElevation: 0),
+        splashFactory: NoSplash.splashFactory,
+        highlightColor: Colors.transparent,
       ),
+      home: _buildScreen(),
     );
   }
-}
 
-class MatchScreen extends StatefulWidget {
-  const MatchScreen({super.key});
-  @override
-  State<MatchScreen> createState() => _MatchScreenState();
-}
-
-class _MatchScreenState extends State<MatchScreen> {
-  int _tab = 0;
-
-  static const _titles = ['DevMatch', 'Explore', 'Profile'];
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[_tab], style: theme.textTheme.h3),
-      ),
-      body: switch (_tab) {
-        0 => const SafeArea(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(0, 8, 0, 20),
-              child: CompanySwipe(),
-            ),
-          ),
-        2 => const ProfileScreen(),
-        1 => const ExploreScreen(),
-        _ => const ProfileScreen(),
-      },
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() => _tab = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(LucideIcons.sparkles), label: 'Match'),
-          NavigationDestination(icon: Icon(LucideIcons.search), label: 'Explore'),
-          NavigationDestination(icon: Icon(LucideIcons.user), label: 'Profile'),
-        ],
-      ),
-    );
+  Widget _buildScreen() {
+    switch (_screen) {
+      case _Screen.welcome:
+        return WelcomeScreen(
+          onSignup: () => _startAuth(true),
+          onSignin: () => _startAuth(false),
+        );
+      case _Screen.auth:
+        return AuthScreen(
+          isSignup: _isSignup,
+          onBack: () => setState(() => _screen = _Screen.welcome),
+          onDone: _finishAuth,
+        );
+      case _Screen.onboarding:
+        return OnboardingScreen(
+          onBack: () => setState(() => _screen = _Screen.auth),
+          onDone: _finishOnboarding,
+        );
+      case _Screen.app:
+        return AppShell(profile: _profile);
+    }
   }
 }
