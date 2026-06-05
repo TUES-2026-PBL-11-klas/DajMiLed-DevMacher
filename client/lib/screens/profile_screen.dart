@@ -68,16 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white, shape: BoxShape.circle,
-                  border: Border.all(color: kLine, width: 1.5),
-                ),
-                child: const Icon(Icons.edit_outlined, color: kInk2, size: 18),
-              ),
-            ]),
+            const SizedBox(height: 8),
             Row(children: [
               DmAvatar(data: avatar, size: 76),
               const SizedBox(width: 16),
@@ -130,6 +121,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
 
             const SizedBox(height: 8),
+            DmBtn(
+              label: 'My Applications',
+              full: true,
+              variant: DmBtnVariant.outline,
+              icon: Icons.send_outlined,
+              onPressed: () => context.push('/applications'),
+            ),
+            const SizedBox(height: 10),
             DmBtn(
               label: 'Sign out',
               full: true,

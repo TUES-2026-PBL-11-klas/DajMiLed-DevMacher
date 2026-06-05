@@ -50,7 +50,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
+    return Stack(children: [
+      Column(children: [
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
         child: TextField(
@@ -86,12 +87,36 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     _projects.isEmpty ? 'No projects yet' : 'No results',
                     style: kBody(15, color: kInk3)))
                 : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                     itemCount: _results.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (_, i) => _ProjectTile(project: _results[i]),
                   ),
       ),
+    ]),
+    // FAB: create project
+    Positioned(
+      right: 20, bottom: 20,
+      child: GestureDetector(
+        onTap: () async {
+          await context.push('/projects/create');
+          _load(); // refresh list after returning
+        },
+        child: Container(
+          width: 54, height: 54,
+          decoration: BoxDecoration(
+            color: kAccent,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [BoxShadow(
+              color: kAccent.withAlpha(130),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            )],
+          ),
+          child: const Icon(Icons.add, color: Colors.white, size: 28),
+        ),
+      ),
+    ),
     ]);
   }
 }
@@ -106,7 +131,9 @@ class _ProjectTile extends StatelessWidget {
     final initial = project.title.isNotEmpty ? project.title[0].toUpperCase() : '?';
     final avatar = AvatarData(kAccentSoft, kAccentInk, initial);
 
-    return Container(
+    return GestureDetector(
+      onTap: () => context.push('/projects/${project.id}'),
+      child: Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -131,6 +158,6 @@ class _ProjectTile extends StatelessWidget {
         const SizedBox(width: 8),
         const Icon(Icons.chevron_right, color: kInk3, size: 20),
       ]),
-    );
+    ));
   }
 }

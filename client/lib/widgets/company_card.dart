@@ -2,41 +2,40 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import 'dm_widgets.dart';
 
-class Company {
-  const Company({required this.name, required this.industry, required this.role,
-      required this.description, required this.skills, required this.location,
-      required this.color});
-  final String name, industry, role, description, location;
+class SwipeTask {
+  final int projectId;
+  final int taskId;
+  final String projectTitle;
+  final String ownerName;
+  final String taskTitle;
+  final String? description;
   final List<String> skills;
   final Color color;
+
+  const SwipeTask({
+    required this.projectId,
+    required this.taskId,
+    required this.projectTitle,
+    required this.ownerName,
+    required this.taskTitle,
+    this.description,
+    required this.skills,
+    required this.color,
+  });
 }
 
-const companies = [
-  Company(name: 'Stripe', industry: 'Fintech', role: 'Backend Engineer · Mid',
-      description: 'Join our payments infrastructure team. Work on high-throughput systems processing millions of transactions daily.',
-      skills: ['Java', 'PostgreSQL', 'Kafka', 'Docker'], location: 'Remote',
-      color: Color(0xFF635BFF)),
-  Company(name: 'Figma', industry: 'Design Tools', role: 'Mobile Developer · Senior',
-      description: 'Build prototyping and collaboration tools used by millions of designers worldwide.',
-      skills: ['Flutter', 'Dart', 'TypeScript', 'WebGL'], location: 'Hybrid · NYC',
-      color: Color(0xFFF24E1E)),
-  Company(name: 'Vercel', industry: 'DevTools', role: 'Infrastructure Engineer · Mid',
-      description: 'Push deployments to the edge. Work on serverless functions and CDN infrastructure at scale.',
-      skills: ['Node.js', 'Rust', 'Docker', 'TypeScript'], location: 'Remote',
-      color: Color(0xFF000000)),
-  Company(name: 'PlanetScale', industry: 'Databases', role: 'Database Engineer · Senior',
-      description: 'Build distributed, MySQL-compatible databases for the world\'s top engineering teams.',
-      skills: ['Go', 'MySQL', 'Kubernetes', 'AWS'], location: 'Remote',
-      color: Color(0xFF5A17EE)),
-  Company(name: 'Linear', industry: 'Productivity', role: 'Frontend Engineer · Mid',
-      description: 'Create the fastest, most opinionated issue tracker on the market. Small team, massive impact.',
-      skills: ['React', 'TypeScript', 'GraphQL', 'PostgreSQL'], location: 'Remote',
-      color: Color(0xFF5E6AD2)),
-];
+Color colorFromTitle(String title) {
+  const palette = [
+    Color(0xFF635BFF), Color(0xFF10B981), Color(0xFF5E6AD2),
+    Color(0xFFF24E1E), Color(0xFF0EA5E9), Color(0xFF8B5CF6),
+    Color(0xFFF59E0B), Color(0xFF047857),
+  ];
+  return palette[title.codeUnits.fold(0, (a, b) => a + b) % palette.length];
+}
 
 class CompanyCard extends StatelessWidget {
-  const CompanyCard({super.key, required this.company});
-  final Company company;
+  const CompanyCard({super.key, required this.task});
+  final SwipeTask task;
 
   @override
   Widget build(BuildContext context) {
@@ -48,51 +47,55 @@ class CompanyCard extends StatelessWidget {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
           decoration: BoxDecoration(
-            color: company.color,
+            color: task.color,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
+          child: Row(children: [
             Container(
-              width: 56, height: 56,
+              width: 52, height: 52,
               decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-              child: Center(child: Text(company.name[0],
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: company.color))),
+              child: Center(child: Text(
+                task.projectTitle.isNotEmpty ? task.projectTitle[0].toUpperCase() : '?',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: task.color),
+              )),
             ),
-            const SizedBox(height: 10),
-            Text(company.name, style: const TextStyle(
-                color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.3)),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(45, 255, 255, 255),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(company.industry,
-                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
-            ),
+            const SizedBox(width: 14),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(task.projectTitle,
+                style: const TextStyle(color: Colors.white, fontSize: 18,
+                    fontWeight: FontWeight.w700, letterSpacing: -0.3),
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 2),
+              Text('by ${task.ownerName}',
+                style: TextStyle(color: Colors.white.withAlpha(200), fontSize: 13)),
+            ])),
           ]),
         ),
-        Expanded(child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(company.role, style: kBody(17, color: kInk, weight: FontWeight.w700)),
-            const SizedBox(height: 5),
-            Row(children: [
-              Icon(Icons.location_on_outlined, size: 13, color: company.color),
-              const SizedBox(width: 4),
-              Text(company.location, style: kBody(13, color: kInk3)),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('TASK', style: kLabel()),
+              const SizedBox(height: 6),
+              Text(task.taskTitle,
+                style: kBody(18, color: kInk, weight: FontWeight.w700)),
+              if (task.description != null && task.description!.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(task.description!, style: kBody(14, color: kInk2),
+                  maxLines: 4, overflow: TextOverflow.ellipsis),
+              ],
+              const Spacer(),
+              if (task.skills.isNotEmpty) ...[
+                Text('SKILLS', style: kLabel()),
+                const SizedBox(height: 8),
+                Wrap(spacing: 6, runSpacing: 6,
+                  children: task.skills.map((s) => DmTag(s, tone: DmTagTone.outline)).toList()),
+              ],
             ]),
-            const SizedBox(height: 14),
-            Text(company.description, style: kBody(14, color: kInk2),
-              overflow: TextOverflow.ellipsis, maxLines: 4),
-            const Spacer(),
-            Wrap(spacing: 6, runSpacing: 6,
-              children: company.skills.map((s) => DmTag(s, tone: DmTagTone.outline)).toList()),
-          ]),
-        )),
+          ),
+        ),
       ]),
     );
   }

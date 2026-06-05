@@ -3,12 +3,15 @@ package com.elsys.server.service;
 import com.elsys.server.dto.request.ProjectRequest;
 import com.elsys.server.dto.response.ProjectDto;
 import com.elsys.server.dto.response.ProjectTaskDto;
+import com.elsys.server.dto.response.SkillTagDto;
 import com.elsys.server.dto.response.UserSummaryDto;
 import com.elsys.server.entity.Project;
+import com.elsys.server.entity.SkillTag;
 import com.elsys.server.entity.User;
 import com.elsys.server.exception.ResourceNotFoundException;
 import com.elsys.server.exception.UnauthorizedAccessException;
 import com.elsys.server.repository.ProjectRepository;
+import com.elsys.server.repository.SkillTagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +23,7 @@ import java.util.List;
 public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectTaskService projectTaskService;
+    private final SkillTagRepository skillTagRepository;
 
     public ProjectDto toDto(Project project) {
         UserSummaryDto ownerDto = new UserSummaryDto(
@@ -31,14 +35,17 @@ public class ProjectService {
         );
         List<ProjectTaskDto> tasks = project.getTasks() == null ? List.of() :
                 project.getTasks().stream().map(projectTaskService::toDto).toList();
-        
+        List<SkillTagDto> skills = project.getSkills() == null ? List.of() :
+                project.getSkills().stream().map(s -> new SkillTagDto(s.getId(), s.getName())).toList();
+
         return new ProjectDto(
                 project.getId(),
                 ownerDto,
                 project.getTitle(),
                 project.getDescription(),
                 project.getCreatedAt(),
-                tasks
+                tasks,
+                skills
         );
     }
 
@@ -78,6 +85,24 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public List<ProjectDto> getProjectsByOwner(Long ownerId) {
         return projectRepository.findByOwnerId(ownerId).stream().map(this::toDto).toList();
+    }
+
+    @Transactional
+    public ProjectDto addSkill(Long projectId, Long skillId, User currentUser) {
+        Project project = getProjectAndVerifyOwner(projectId, currentUser);
+        SkillTag skill = skillTagRepository.findById(skillId)
+                .orElseThrow(() -> new ResourceNotFoundException("Skill", skillId));
+        project.addSkill(skill);
+        return toDto(projectRepository.save(project));
+    }
+
+    @Transactional
+    public ProjectDto removeSkill(Long projectId, Long skillId, User currentUser) {
+        Project project = getProjectAndVerifyOwner(projectId, currentUser);
+        SkillTag skill = skillTagRepository.findById(skillId)
+                .orElseThrow(() -> new ResourceNotFoundException("Skill", skillId));
+        project.removeSkill(skill);
+        return toDto(projectRepository.save(project));
     }
 
     private Project findProjectOrThrow(Long projectId) {

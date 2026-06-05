@@ -7,6 +7,7 @@ final _storage = FlutterSecureStorage(
 );
 
 bool loggedIn = false;
+int? currentUserId;
 
 Future<void> init() async {
   loggedIn = await _storage.read(key: 'token') != null;
@@ -15,6 +16,7 @@ Future<void> init() async {
 Future<void> logout() async {
   await _storage.delete(key: 'token');
   loggedIn = false;
+  currentUserId = null;
 }
 
 Future<String?> readToken() => _storage.read(key: 'token');
@@ -29,6 +31,7 @@ Future<String?> login(String email, String password) async {
       final body = jsonDecode(res.body) as Map<String, dynamic>;
       await _storage.write(key: 'token', value: body['token'] as String);
       loggedIn = true;
+      currentUserId = (body['user'] as Map<String, dynamic>?)?['id'] as int?;
       return null;
     }
     final body = jsonDecode(res.body) as Map<String, dynamic>;
@@ -57,6 +60,7 @@ Future<String?> register(
       final body = jsonDecode(res.body) as Map<String, dynamic>;
       await _storage.write(key: 'token', value: body['token'] as String);
       loggedIn = true;
+      currentUserId = (body['user'] as Map<String, dynamic>?)?['id'] as int?;
       return null;
     }
     final body = jsonDecode(res.body) as Map<String, dynamic>;

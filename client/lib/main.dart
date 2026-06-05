@@ -7,6 +7,9 @@ import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/explore_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/project_detail_screen.dart';
+import 'screens/my_applications_screen.dart';
+import 'screens/create_project_screen.dart';
 import 'widgets/company_swipe.dart';
 import 'widgets/dm_widgets.dart';
 
@@ -23,6 +26,14 @@ final _router = GoRouter(
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
     GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
     GoRoute(path: '/', builder: (_, __) => const MatchScreen()),
+    GoRoute(path: '/projects/create', builder: (_, __) => const CreateProjectScreen()),
+    GoRoute(
+      path: '/projects/:id',
+      builder: (_, state) => ProjectDetailScreen(
+        projectId: int.parse(state.pathParameters['id']!),
+      ),
+    ),
+    GoRoute(path: '/applications', builder: (_, __) => const MyApplicationsScreen()),
   ],
 );
 

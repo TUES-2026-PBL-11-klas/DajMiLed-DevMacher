@@ -9,5 +9,6 @@ public record ProjectDto(
         String title,
         String description,
         LocalDateTime createdAt,
-        List<ProjectTaskDto> tasks
+        List<ProjectTaskDto> tasks,
+        List<SkillTagDto> skills
 ) {}

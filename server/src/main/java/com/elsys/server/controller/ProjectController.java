@@ -54,4 +54,20 @@ public class ProjectController {
         }
         return ResponseEntity.ok(projectService.getAllProjects());
     }
+
+    @PostMapping("/{id}/skills/{skillId}")
+    public ResponseEntity<ProjectDto> addSkill(
+            @PathVariable Long id,
+            @PathVariable Long skillId,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(projectService.addSkill(id, skillId, currentUser));
+    }
+
+    @DeleteMapping("/{id}/skills/{skillId}")
+    public ResponseEntity<ProjectDto> removeSkill(
+            @PathVariable Long id,
+            @PathVariable Long skillId,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(projectService.removeSkill(id, skillId, currentUser));
+    }
 }
