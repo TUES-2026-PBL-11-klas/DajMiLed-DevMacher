@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Lombok-generated code exposes internal references — expected -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+    <!-- JPA entities need mutable state -->
+    <Match>
+        <Bug pattern="SE_BAD_FIELD"/>
+    </Match>
+    <!-- Spring beans wired by constructor — not null at runtime -->
+    <Match>
+        <Bug pattern="NP_NONNULL_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
+    </Match>
+</FindBugsFilter>

@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devmatch-server
+  labels:
+    app: devmatch-server
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: devmatch-server
+  template:
+    metadata:
+      labels:
+        app: devmatch-server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8080"
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "devmatch"
+        vault.hashicorp.com/agent-inject-secret-DB_URL: "secret/data/devmatch"
+        vault.hashicorp.com/agent-inject-template-DB_URL: |
+          {{`{{- with secret "secret/data/devmatch" }}{{ .Data.data.DB_URL }}{{- end }}`}}
+        vault.hashicorp.com/agent-inject-secret-DB_USERNAME: "secret/data/devmatch"
+        vault.hashicorp.com/agent-inject-template-DB_USERNAME: |
+          {{`{{- with secret "secret/data/devmatch" }}{{ .Data.data.DB_USERNAME }}{{- end }}`}}
+        vault.hashicorp.com/agent-inject-secret-DB_PASSWORD: "secret/data/devmatch"
+        vault.hashicorp.com/agent-inject-template-DB_PASSWORD: |
+          {{`{{- with secret "secret/data/devmatch" }}{{ .Data.data.DB_PASSWORD }}{{- end }}`}}
+        vault.hashicorp.com/agent-inject-secret-JWT_SECRET: "secret/data/devmatch"
+        vault.hashicorp.com/agent-inject-template-JWT_SECRET: |
+          {{`{{- with secret "secret/data/devmatch" }}{{ .Data.data.JWT_SECRET }}{{- end }}`}}
+        vault.hashicorp.com/agent-inject-secret-JWT_EXPIRATION_MS: "secret/data/devmatch"
+        vault.hashicorp.com/agent-inject-template-JWT_EXPIRATION_MS: |
+          {{`{{- with secret "secret/data/devmatch" }}{{ .Data.data.JWT_EXPIRATION_MS }}{{- end }}`}}
+    spec:
+      serviceAccountName: devmatch-server
+      containers:
+        - name: server
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 45
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
